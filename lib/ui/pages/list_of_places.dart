@@ -1,24 +1,30 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:places_that_dont_exist/base/colors.dart';
 import 'package:places_that_dont_exist/base/images.dart';
 import 'package:places_that_dont_exist/theme/theme.dart';
 import 'package:places_that_dont_exist/ui/data_storage.dart';
 import 'package:places_that_dont_exist/ui/pages/adding_place.dart';
-import 'package:places_that_dont_exist/ui/pages/list_of_places.dart';
-import 'package:places_that_dont_exist/ui/pages/settings.dart';
+import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+import 'package:places_that_dont_exist/base/colors.dart';
+
+// ignore: must_be_immutable
+class ListOfPlaceScreen extends StatefulWidget {
+  String? title;
+  ListOfPlaceScreen({
+    super.key,
+    this.title,
+  });
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<ListOfPlaceScreen> createState() => _ListOfPlaceScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
   List<Map<String, dynamic>> places = [];
   List<Map<String, dynamic>> filteredPlaces = [];
   String searchQuery = '';
@@ -197,7 +203,6 @@ class _HomePageState extends State<HomePage> {
     return Container(
       width: MediaQuery.of(context).size.width,
       height: MediaQuery.of(context).size.height,
-      padding: EdgeInsets.symmetric(horizontal: 15.w),
       decoration: BoxDecoration(
         gradient: customTheme?.gradientBackground,
       ),
@@ -205,243 +210,101 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ShaderMask(
-                      shaderCallback: (bounds) {
-                        return customTheme?.secondaryGradient.createShader(
-                              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                            ) ??
-                            LinearGradient(
-                                    colors: [AppColors.white, AppColors.white])
-                                .createShader(
-                              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                            );
-                      },
-                      child: Text(
-                        'Places',
-                        style: theme.titleLarge?.copyWith(fontSize: 58),
-                      ),
-                    ),
-                    Transform.translate(
-                      offset: const Offset(0, -10),
-                      child: ShaderMask(
-                        shaderCallback: (bounds) {
-                          return customTheme?.textRedGradient.createShader(
-                                Rect.fromLTWH(
-                                    0, 0, bounds.width, bounds.height),
-                              ) ??
-                              const LinearGradient(
-                                      colors: [Colors.white, Colors.white])
-                                  .createShader(
-                                Rect.fromLTWH(
-                                    0, 0, bounds.width, bounds.height),
-                              );
-                        },
-                        child: Text(
-                          "That Don’t Exist",
-                          style: theme.titleMedium,
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-                Row(
-                  children: [
-                    ShaderMask(
-                      shaderCallback: (bounds) {
-                        return customTheme?.textRedGradient.createShader(
-                              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                            ) ??
-                            const LinearGradient(
-                                    colors: [Colors.white, Colors.white])
-                                .createShader(
-                              Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                            );
-                      },
-                      child: Container(
-                        width: 52.w,
-                        height: 52.w,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(width: 1, color: AppColors.white),
-                        ),
-                        child: Center(
-                          child: Container(
-                            width: 24.w,
-                            height: 24.w,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: AppColors.white,
-                                width: 1.5,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                "?",
-                                style: TextStyle(
-                                  color: AppColors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) {
-                            return SettingsScreen(
-                              title: "Settings",
-                            );
-                          }),
-                        );
-                      },
-                      child: Container(
-                        width: 52.w,
-                        height: 52.w,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: AppColors.darkGrey,
-                        ),
-                        child: Image.asset(
-                          AppImages.settingsMinimalistic,
-                          width: 24.w,
-                          height: 24.w,
-                        ),
-                      ),
-                    )
-                  ],
-                )
-              ],
+            Padding(
+              padding: EdgeInsets.only(
+                top: 10.w,
+              ),
+              child: appBar(theme: theme, customTheme: customTheme),
             ),
-            quoteOfTheDay(theme: theme, customTheme: customTheme),
-            SizedBox(
-              height: 10.w,
-            ),
-            placesBlock(theme: theme, customTheme: customTheme),
+            Expanded(child: placesBlock(theme: theme, customTheme: customTheme))
+            // bodyContent(theme: theme, customTheme: customTheme),
           ],
         ),
       ),
     );
   }
 
-  Widget quoteOfTheDay({required TextTheme theme, required customTheme}) {
-    return Container(
-      width: double.infinity,
-      height: 140.w,
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: AppColors.darkGrey,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Quote of the day",
-            style: theme.bodySmall?.copyWith(
-              color: AppColors.grey,
-              decoration: TextDecoration.underline,
-              decorationColor: AppColors.grey,
+  Widget appBar({required TextTheme? theme, required customTheme}) {
+    return BottomBorderContainer(
+      child: Padding(
+        padding: EdgeInsets.only(top: 20, left: 26.w, bottom: 15, right: 26.w),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Icon(Icons.arrow_back_ios_new, color: AppColors.grey),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  widget.title ?? '',
+                  style: theme?.bodySmall
+                      ?.copyWith(fontSize: 17, color: AppColors.grey),
+                ),
+              ],
             ),
-          ),
-          SizedBox(
-            height: 15.w,
-          ),
-          Row(
-            children: [
-              Image.asset(AppImages.star),
-              SizedBox(
-                width: 20.w,
-              ),
-              Expanded(
-                child: Text(
-                  '“Everything we can imagine is real.”',
-                  maxLines: 2,
-                  style: theme.titleMedium?.copyWith(
-                    fontSize: 20,
+            Row(
+              children: [
+                ShaderMask(
+                  shaderCallback: (bounds) {
+                    return customTheme?.textRedGradient.createShader(
+                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                        ) ??
+                        const LinearGradient(
+                            colors: [Colors.white, Colors.white]).createShader(
+                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                        );
+                  },
+                  child: Container(
+                    width: 24.w,
+                    height: 24.w,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: AppColors.white,
+                        width: 1.5,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        "?",
+                        style: TextStyle(
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 70),
-                child: Image.asset(AppImages.forward),
-              )
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                'Pablo Picasso',
-                style: theme.bodySmall?.copyWith(color: AppColors.grey),
-              ),
-              SizedBox(
-                width: 40.w,
-              )
-            ],
-          )
-        ],
+                SizedBox(
+                  width: 10.w,
+                ),
+                Image.asset(AppImages.pointOnMap)
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget placesBlock({required TextTheme theme, required customTheme}) {
-    return Expanded(
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: 15.w,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SizedBox(height: 20.w),
           searchField(theme: theme, customTheme: customTheme),
           SizedBox(height: 20.w),
-          filteredPlaces.isNotEmpty
-              ? GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) {
-                        return ListOfPlaceScreen(
-                          title: "List of places",
-                        );
-                      }),
-                    ).then((value) async {
-                      places = await DataStorage.getPlaces();
-                      filteredPlaces = List.from(places);
-                      print(places);
-                      setState(() {});
-                      FocusScope.of(context).unfocus();
-                    });
-                  },
-                  child: Row(
-                    children: [
-                      Image.asset(AppImages.pointOnMap),
-                      SizedBox(
-                        width: 10.w,
-                      ),
-                      Text(
-                        "List of places",
-                        style: theme.bodySmall?.copyWith(
-                          color: AppColors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : const SizedBox(),
-          SizedBox(height: 10.w),
           Expanded(
             child: ListView.builder(
-              itemCount: filteredPlaces.length <= 3 ? filteredPlaces.length : 3,
+              itemCount: filteredPlaces.length,
               itemBuilder: (context, index) {
                 return placeCard(
                   theme: theme,
@@ -455,33 +318,6 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-            // ListView(
-            //   children: [
-            //     placeCard(
-            //       imagePath: AppImages
-            //           .onboarding1, // Замените на правильный путь к изображению
-            //       title: "The Lost Island",
-            //       type: "Forest",
-            //       hashtag: "#LostWorld",
-            //     ),
-            //     SizedBox(height: 15.w),
-            //     placeCard(
-            //       imagePath: AppImages
-            //           .onboarding2, // Замените на правильный путь к изображению
-            //       title: "Silent hill",
-            //       type: "City",
-            //       hashtag: "#MysteruWorld",
-            //     ),
-            //     SizedBox(height: 15.w),
-            //     placeCard(
-            //       imagePath: AppImages
-            //           .onboarding3, // Замените на правильный путь к изображению
-            //       title: "Salty lake",
-            //       type: "Lake",
-            //       hashtag: "#Dreamplace",
-            //     ),
-            //   ],
-            // ),
           ),
         ],
       ),
