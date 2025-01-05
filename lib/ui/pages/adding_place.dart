@@ -15,9 +15,11 @@ import 'package:places_that_dont_exist/base/colors.dart';
 // ignore: must_be_immutable
 class AddingPlaceScreen extends StatefulWidget {
   String? title;
+  final Map<String, dynamic>? placeData;
   AddingPlaceScreen({
     super.key,
     this.title,
+    this.placeData,
   });
 
   @override
@@ -41,13 +43,63 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
   String typeColor = '';
   TextEditingController nameController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
-  TextEditingController controller = TextEditingController();
+  TextEditingController enterOtherController = TextEditingController();
   TextEditingController tagController = TextEditingController();
+  TextEditingController geographicalController = TextEditingController();
   TextEditingController areaController = TextEditingController();
   TextEditingController climateController = TextEditingController();
   TextEditingController terrainController = TextEditingController();
 
   bool isMainTextFieldFilled = false;
+
+  bool get allFieldsFilled {
+    return _image != null &&
+        nameController.text.isNotEmpty &&
+        selectedOption.isNotEmpty &&
+        (selectedOption != "Enter other" ||
+            enterOtherController.text.isNotEmpty) &&
+        tagController.text.isNotEmpty &&
+        descriptionController.text.isNotEmpty &&
+        geographicalController.text.isNotEmpty &&
+        areaController.text.isNotEmpty &&
+        climateController.text.isNotEmpty &&
+        terrainController.text.isNotEmpty &&
+        isMainTextFieldFilled;
+  }
+
+  void _onFieldChanged() {
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.placeData != null) {
+      final data = widget.placeData!;
+      nameController.text = data['name'] ?? '';
+      selectedOption = data['type'] != "City" ||
+              data['type'] != "Desert" ||
+              data['type'] != "Mountain" ||
+              data['type'] != "Lake" ||
+              data['type'] != "Village" ||
+              data['type'] != "Forest"
+          ? "Enter other"
+          : data['type'] ?? '';
+      typeColor = data['typeColor'] ?? '';
+      enterOtherController.text =
+          selectedOption == "Enter other" ? data['type'] : '';
+      tagController.text = data['tag'] ?? '';
+      descriptionController.text = data['description'] ?? '';
+      geographicalController.text = data['geographical'] ?? '';
+      areaController.text = data['geographicalCharacteristics']?['area'] ?? '';
+      climateController.text =
+          data['geographicalCharacteristics']?['climate'] ?? '';
+      terrainController.text =
+          data['geographicalCharacteristics']?['terrain'] ?? '';
+      _image = File(data['image']); // Загрузка изображения по пути
+      isMainTextFieldFilled = true;
+    }
+  }
 
   void _unfocus() {
     FocusScope.of(context).unfocus();
@@ -327,6 +379,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
               color: AppColors.white,
             ),
             controller: nameController,
+            onChanged: (_) => _onFieldChanged(),
             cursorColor: AppColors.white,
             decoration: InputDecoration(
               isDense: true,
@@ -380,7 +433,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                         setState(() {
                           selectedOption = option["type"];
                           typeColor = option["color"];
-                          controller.clear();
+                          enterOtherController.clear();
                         });
                         print(typeColor);
                       },
@@ -416,7 +469,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                                 setState(() {
                                   selectedOption = value!;
                                   typeColor = option["color"];
-                                  controller.clear();
+                                  enterOtherController.clear();
                                 });
                                 print(typeColor);
                               },
@@ -464,7 +517,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                   ),
                   Expanded(
                     child: TextField(
-                      controller: controller,
+                      controller: enterOtherController,
                       decoration: InputDecoration(
                         hintText: "Enter other",
                         hintStyle:
@@ -479,10 +532,11 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                       onChanged: (text) {
                         if (text.isNotEmpty) {
                           setState(() {
-                            selectedOption = "Enter other";
+                            // selectedOption = "Enter other";
                             enterOther = text;
                           });
                         }
+                        _onFieldChanged();
                       },
                       style: theme?.bodySmall,
                     ),
@@ -548,6 +602,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                   selection: TextSelection.collapsed(offset: text.length + 1),
                 );
               }
+              _onFieldChanged();
             },
             onSubmitted: (text) {
               if (text == "#") {
@@ -595,6 +650,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
               color: AppColors.white,
               height: 1.5, // Высота строки
             ),
+            onChanged: (_) => _onFieldChanged(),
             cursorColor: AppColors.white,
             decoration: InputDecoration(
               isDense: true,
@@ -641,6 +697,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
           ),
           SizedBox(height: 10.w),
           TextField(
+            controller: geographicalController,
             maxLines: null,
             style: theme?.bodySmall?.copyWith(
               color: AppColors.white,
@@ -753,6 +810,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
               color: AppColors.white,
               height: 1.5,
             ),
+            onChanged: (_) => _onFieldChanged(),
             cursorColor: AppColors.white,
             decoration: InputDecoration(
               isDense: true,
@@ -770,11 +828,12 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
   }
 
   Widget buttonsBlock({required TextTheme? theme, required customTheme}) {
-    bool allFieldsFilled = nameController.text.isNotEmpty &&
-        selectedOption.isNotEmpty &&
-        (selectedOption != "Enter other" || controller.text.isNotEmpty) &&
-        tagController.text.isNotEmpty &&
-        isMainTextFieldFilled;
+    // bool allFieldsFilled = nameController.text.isNotEmpty &&
+    //     selectedOption.isNotEmpty &&
+    //     (selectedOption != "Enter other" || controller.text.isNotEmpty) &&
+    //     tagController.text.isNotEmpty &&
+    //     isMainTextFieldFilled;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -815,7 +874,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
           child: GestureDetector(
             onTap: allFieldsFilled
                 ? () async {
-                    Map<String, dynamic> placeData = {};
+                    // Map<String, dynamic> placeData = {};
                     String? relativePath;
 
                     try {
@@ -836,8 +895,8 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                       }
 
                       // Формируем объект с данными
-                      placeData = {
-                        'image': relativePath,
+                      final updatedData = {
+                        'image': relativePath ?? widget.placeData?['image'],
                         'name': nameController.text,
                         "type": selectedOption == "Enter other"
                             ? enterOther
@@ -845,23 +904,33 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                         'typeColor': typeColor,
                         'tag': tagController.text,
                         'description': descriptionController.text,
+                        'geographical': geographicalController.text,
                         'geographicalCharacteristics': {
                           'area': areaController.text,
                           'climate': climateController.text,
                           'terrain': terrainController.text,
                         },
-                        'date': DateTime.now().toIso8601String(),
+                        'date': widget.placeData?['date'] ??
+                            DateTime.now().toIso8601String(),
                       };
 
                       // Получаем текущие данные и добавляем новый объект
                       final List<Map<String, dynamic>> places =
                           await DataStorage.getPlaces();
-                      places.add(placeData);
+                      if (widget.placeData != null) {
+                        final index = places.indexOf(widget.placeData ?? {});
+                        if (index != -1) {
+                          places[index] = updatedData; // Обновляем элемент
+                        }
+                      } else {
+                        // Если создаётся новый элемент
+                        places.add(updatedData);
+                      }
 
                       // Сохраняем обновленный список
                       await DataStorage.savePlaces(places);
                       FocusScope.of(context).unfocus();
-                      Navigator.pop(context);
+                      Navigator.pop(context, updatedData);
                     } catch (e) {
                       print("Ошибка при сохранении данных: $e");
                     }

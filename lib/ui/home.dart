@@ -156,6 +156,38 @@ class _HomePageState extends State<HomePage> {
     await DataStorage.savePlaces(places);
   }
 
+  Future<void> editPlace(int index) async {
+    final originalIndex = places.indexOf(filteredPlaces[index]);
+    final placeData = Map<String, dynamic>.from(filteredPlaces[index]);
+
+    // Получаем полный путь к изображению
+    if (placeData['image'] != null) {
+      placeData['image'] = await getFullPath(placeData['image']);
+    }
+
+    // Переходим на экран редактирования
+    final updatedPlace = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddingPlaceScreen(
+          title: "Edit Place",
+          placeData: placeData,
+        ),
+      ),
+    );
+
+    // Если данные изменены, обновляем список
+    if (updatedPlace != null) {
+      setState(() {
+        places[originalIndex] = updatedPlace;
+        filteredPlaces[index] = updatedPlace;
+      });
+
+      // Сохраняем обновлённые данные
+      await DataStorage.savePlaces(places);
+    }
+  }
+
   Future<String> getFullPath(String relativePath) async {
     if (relativePath.isEmpty) {
       return ''; // Возвращаем пустую строку, если путь отсутствует
@@ -743,7 +775,7 @@ class _HomePageState extends State<HomePage> {
                                         GestureDetector(
                                           onTap: () {
                                             Navigator.pop(context);
-                                            FocusScope.of(context).unfocus();
+                                            editPlace(index);
                                           },
                                           child: Text(
                                             'Edit',
