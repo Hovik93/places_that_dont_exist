@@ -70,13 +70,8 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
   Widget build(BuildContext context) {
     final TextTheme theme = Theme.of(context).textTheme;
     final customTheme = Theme.of(context).extension<CustomTheme>();
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus(); // Снимает фокус с любого TextField
-      },
-      child: Scaffold(
-        body: body(theme: theme, customTheme: customTheme),
-      ),
+    return Scaffold(
+      body: body(theme: theme, customTheme: customTheme),
     );
   }
 
@@ -97,7 +92,11 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
               ),
               child: appBar(theme: theme, customTheme: customTheme),
             ),
-            Expanded(child: placesBlock(theme: theme, customTheme: customTheme))
+            Expanded(
+              child: SingleChildScrollView(
+                child: placesBlock(theme: theme, customTheme: customTheme),
+              ),
+            )
             // bodyContent(theme: theme, customTheme: customTheme),
           ],
         ),
@@ -303,6 +302,7 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
                       width: 60.w,
@@ -311,9 +311,11 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
                         style: theme.bodySmall?.copyWith(color: AppColors.grey),
                       ),
                     ),
-                    Text(
-                      widget.data?['geographicalCharacteristics']['area'],
-                      style: theme.bodySmall,
+                    Flexible(
+                      child: Text(
+                        widget.data?['geographicalCharacteristics']['area'],
+                        style: theme.bodySmall,
+                      ),
                     ),
                   ],
                 ),
@@ -321,6 +323,7 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
                   padding: EdgeInsets.symmetric(vertical: 10.w),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(
                         width: 60.w,
@@ -330,15 +333,19 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
                               theme.bodySmall?.copyWith(color: AppColors.grey),
                         ),
                       ),
-                      Text(
-                        widget.data?['geographicalCharacteristics']['climate'],
-                        style: theme.bodySmall,
+                      Flexible(
+                        child: Text(
+                          widget.data?['geographicalCharacteristics']
+                              ['climate'],
+                          style: theme.bodySmall,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(
                       width: 60.w,
@@ -347,9 +354,11 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
                         style: theme.bodySmall?.copyWith(color: AppColors.grey),
                       ),
                     ),
-                    Text(
-                      widget.data?['geographicalCharacteristics']['terrain'],
-                      style: theme.bodySmall,
+                    Flexible(
+                      child: Text(
+                        widget.data?['geographicalCharacteristics']['terrain'],
+                        style: theme.bodySmall,
+                      ),
                     ),
                   ],
                 )
