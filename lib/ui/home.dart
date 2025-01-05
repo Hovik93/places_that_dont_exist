@@ -9,6 +9,7 @@ import 'package:places_that_dont_exist/theme/theme.dart';
 import 'package:places_that_dont_exist/ui/data_storage.dart';
 import 'package:places_that_dont_exist/ui/pages/adding_place.dart';
 import 'package:places_that_dont_exist/ui/pages/list_of_places.dart';
+import 'package:places_that_dont_exist/ui/pages/place_details.dart';
 import 'package:places_that_dont_exist/ui/pages/settings.dart';
 
 class HomePage extends StatefulWidget {
@@ -475,15 +476,28 @@ class _HomePageState extends State<HomePage> {
             child: ListView.builder(
               itemCount: filteredPlaces.length <= 3 ? filteredPlaces.length : 3,
               itemBuilder: (context, index) {
-                return placeCard(
-                  theme: theme,
-                  customTheme: customTheme,
-                  imagePath: filteredPlaces[index]['image'],
-                  title: filteredPlaces[index]['name'],
-                  type: filteredPlaces[index]['type'],
-                  colorType: filteredPlaces[index]['typeColor'],
-                  hashtag: filteredPlaces[index]['tag'],
-                  index: index,
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) {
+                        return PlaceDetailsScreen(
+                          title: filteredPlaces[index]['name'],
+                          data: filteredPlaces[index],
+                        );
+                      }),
+                    );
+                  },
+                  child: placeCard(
+                    theme: theme,
+                    customTheme: customTheme,
+                    imagePath: filteredPlaces[index]['image'],
+                    title: filteredPlaces[index]['name'],
+                    type: filteredPlaces[index]['type'],
+                    colorType: filteredPlaces[index]['typeColor'],
+                    hashtag: filteredPlaces[index]['tag'],
+                    index: index,
+                  ),
                 );
               },
             ),

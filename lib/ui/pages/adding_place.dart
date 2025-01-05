@@ -196,7 +196,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'Adding a place',
+                  widget.title ?? '',
                   style: theme?.bodySmall
                       ?.copyWith(fontSize: 17, color: AppColors.grey),
                 ),
