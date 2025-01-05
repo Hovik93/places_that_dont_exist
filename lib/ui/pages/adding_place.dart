@@ -4,8 +4,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:places_that_dont_exist/base/images.dart';
 import 'package:places_that_dont_exist/theme/theme.dart';
+import 'package:places_that_dont_exist/ui/data_storage.dart';
 import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
 
 import 'package:places_that_dont_exist/base/colors.dart';
@@ -27,16 +29,23 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
   final ImagePicker _picker = ImagePicker();
 
   final List<Map<String, dynamic>> options = [
-    {"type": "City", "color": ""},
-    {"type": "Desert", "color": ""},
-    {"type": "Mountain", "color": ""},
-    {"type": "Lake", "color": ""},
-    {"type": "Village", "color": ""},
-    {"type": "Forest", "color": ""},
+    {"type": "City", "color": "0xffFEE21D"},
+    {"type": "Desert", "color": "0xffF05634"},
+    {"type": "Mountain", "color": "0xff5F54F5"},
+    {"type": "Lake", "color": "0xff54D7F5"},
+    {"type": "Village", "color": "0xff5CF554"},
+    {"type": "Forest", "color": "0xff7AE09F"},
   ];
   String selectedOption = '';
+  String enterOther = '';
+  String typeColor = '';
+  TextEditingController nameController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
   TextEditingController controller = TextEditingController();
   TextEditingController tagController = TextEditingController();
+  TextEditingController areaController = TextEditingController();
+  TextEditingController climateController = TextEditingController();
+  TextEditingController terrainController = TextEditingController();
 
   bool isMainTextFieldFilled = false;
 
@@ -61,6 +70,21 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
     } catch (e) {
       print("Error while selecting image: $e");
     }
+  }
+
+  Future<String> saveImage(File image) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final imageDirectory = Directory('${directory.path}/place_images');
+
+    if (!await imageDirectory.exists()) {
+      await imageDirectory.create(recursive: true);
+    }
+
+    final fileName = image.uri.pathSegments.last;
+    final savedImagePath = '${imageDirectory.path}/$fileName';
+
+    await image.copy(savedImagePath);
+    return 'place_images/$fileName'; // Возвращаем относительный путь
   }
 
   @override
@@ -263,6 +287,9 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
             height: 15.w,
           ),
           buttonsBlock(theme: theme, customTheme: customTheme),
+          SizedBox(
+            height: 20.w,
+          )
         ],
       ),
     );
@@ -299,6 +326,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
             style: theme?.bodySmall?.copyWith(
               color: AppColors.white,
             ),
+            controller: nameController,
             cursorColor: AppColors.white,
             decoration: InputDecoration(
               isDense: true,
@@ -351,8 +379,10 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                       onTap: () {
                         setState(() {
                           selectedOption = option["type"];
+                          typeColor = option["color"];
                           controller.clear();
                         });
+                        print(typeColor);
                       },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -385,8 +415,10 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                               onChanged: (value) {
                                 setState(() {
                                   selectedOption = value!;
+                                  typeColor = option["color"];
                                   controller.clear();
                                 });
+                                print(typeColor);
                               },
                               activeColor: Colors.white, // Замените на градиент
                             ),
@@ -423,6 +455,8 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                       onChanged: (value) {
                         setState(() {
                           selectedOption = value!;
+                          typeColor = "0xffDE2D95";
+                          print(typeColor);
                         });
                       },
                       activeColor: Colors.white,
@@ -446,6 +480,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                         if (text.isNotEmpty) {
                           setState(() {
                             selectedOption = "Enter other";
+                            enterOther = text;
                           });
                         }
                       },
@@ -555,6 +590,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
           SizedBox(height: 10.w),
           TextField(
             maxLines: null,
+            controller: descriptionController,
             style: theme?.bodySmall?.copyWith(
               color: AppColors.white,
               height: 1.5, // Высота строки
@@ -638,18 +674,21 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                   title: "Area",
                   hintText: "Enter area",
                   theme: theme,
+                  controller: areaController,
                 ),
                 SizedBox(height: 10.w),
                 buildCharacteristicSection(
                   title: "Climate",
                   hintText: "Enter climate",
                   theme: theme,
+                  controller: climateController,
                 ),
                 SizedBox(height: 10.w),
                 buildCharacteristicSection(
                   title: "Terrain",
                   hintText: "Enter terrain",
                   theme: theme,
+                  controller: terrainController,
                 ),
               ],
             )
@@ -689,20 +728,27 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
     required String title,
     required String hintText,
     required TextTheme? theme,
+    required TextEditingController controller,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: theme?.bodySmall?.copyWith(
-            fontSize: 12.sp,
-            color: AppColors.grey,
+        SizedBox(
+          width: 50.w,
+          child: Text(
+            title,
+            style: theme?.bodySmall?.copyWith(
+              fontSize: 12.sp,
+              color: AppColors.grey,
+            ),
           ),
         ),
         SizedBox(width: 10.w),
         Expanded(
           child: TextField(
+            controller: controller,
+            maxLines: 3,
+            minLines: 1,
             style: theme?.bodySmall?.copyWith(
               color: AppColors.white,
               height: 1.5,
@@ -724,7 +770,8 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
   }
 
   Widget buttonsBlock({required TextTheme? theme, required customTheme}) {
-    bool allFieldsFilled = selectedOption.isNotEmpty &&
+    bool allFieldsFilled = nameController.text.isNotEmpty &&
+        selectedOption.isNotEmpty &&
         (selectedOption != "Enter other" || controller.text.isNotEmpty) &&
         tagController.text.isNotEmpty &&
         isMainTextFieldFilled;
@@ -734,6 +781,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
         Expanded(
           child: GestureDetector(
             onTap: () {
+              FocusScope.of(context).unfocus();
               Navigator.pop(context);
             },
             child: ShaderMask(
@@ -765,9 +813,60 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
         SizedBox(width: 20.w),
         Expanded(
           child: GestureDetector(
-            onTap: () {
-              Navigator.pop(context);
-            },
+            onTap: allFieldsFilled
+                ? () async {
+                    Map<String, dynamic> placeData = {};
+                    String? relativePath;
+
+                    try {
+                      relativePath = await saveImage(_image!);
+                      try {
+                        // Получаем директорию документов
+                        final directory =
+                            await getApplicationDocumentsDirectory();
+
+                        // Создаём папку, если она не существует
+                        final imageDirectory =
+                            Directory('${directory.path}/subcategory_images');
+                        if (!await imageDirectory.exists()) {
+                          await imageDirectory.create(recursive: true);
+                        }
+                      } catch (e) {
+                        print("Ошибка при сохранении изображения: $e");
+                      }
+
+                      // Формируем объект с данными
+                      placeData = {
+                        'image': relativePath,
+                        'name': nameController.text,
+                        "type": selectedOption == "Enter other"
+                            ? enterOther
+                            : selectedOption,
+                        'typeColor': typeColor,
+                        'tag': tagController.text,
+                        'description': descriptionController.text,
+                        'geographicalCharacteristics': {
+                          'area': areaController.text,
+                          'climate': climateController.text,
+                          'terrain': terrainController.text,
+                        },
+                        'date': DateTime.now().toIso8601String(),
+                      };
+
+                      // Получаем текущие данные и добавляем новый объект
+                      final List<Map<String, dynamic>> places =
+                          await DataStorage.getPlaces();
+                      places.add(placeData);
+
+                      // Сохраняем обновленный список
+                      await DataStorage.savePlaces(places);
+                      FocusScope.of(context).unfocus();
+                      Navigator.pop(context);
+                    } catch (e) {
+                      print("Ошибка при сохранении данных: $e");
+                    }
+                  }
+                : null,
             child: ShaderMask(
               shaderCallback: (bounds) {
                 return allFieldsFilled

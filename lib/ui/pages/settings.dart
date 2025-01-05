@@ -160,7 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                                 SizedBox(height: 10),
                                 Text(
-                                  'Do you really want to delete the data?',
+                                  'Do you really want to delete the date?',
                                   style: theme.bodySmall,
                                 ),
                                 SizedBox(height: 20),

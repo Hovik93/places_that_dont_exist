@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:places_that_dont_exist/base/colors.dart';
 import 'package:places_that_dont_exist/base/images.dart';
 import 'package:places_that_dont_exist/theme/theme.dart';
+import 'package:places_that_dont_exist/ui/data_storage.dart';
 import 'package:places_that_dont_exist/ui/pages/adding_place.dart';
 import 'package:places_that_dont_exist/ui/pages/settings.dart';
 
@@ -14,12 +18,194 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<Map<String, dynamic>> places = [];
+  List<Map<String, dynamic>> filteredPlaces = [];
+  String searchQuery = '';
+  bool isAscending = true;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      places = await DataStorage.getPlaces();
+      filteredPlaces = List.from(places);
+      setState(() {});
+      print(places);
+    });
+
+    super.initState();
+  }
+
+  void updateSearch(String query) {
+    setState(() {
+      searchQuery = query;
+      filteredPlaces = places
+          .where((place) => place['name']
+              .toString()
+              .toLowerCase()
+              .contains(searchQuery.toLowerCase()))
+          .toList();
+    });
+  }
+
+  void sortPlacesByType() {
+    setState(() {
+      if (!isAscending) {
+        // Возвращаем исходный список
+        filteredPlaces = List.from(places);
+        isAscending = true;
+      } else {
+        // Сортируем список
+        filteredPlaces.sort((a, b) {
+          return a['type'].toString().compareTo(b['type'].toString());
+        });
+        isAscending = false;
+      }
+    });
+  }
+
+  void showSortOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      backgroundColor: AppColors.darkGrey,
+      builder: (context) {
+        final TextTheme theme = Theme.of(context).textTheme;
+        final customTheme = Theme.of(context).extension<CustomTheme>();
+        return Container(
+          padding: EdgeInsets.all(20.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                "Sort",
+                style: theme.bodySmall?.copyWith(
+                  color: AppColors.grey,
+                  fontSize: 13.sp,
+                ),
+              ),
+              SizedBox(height: 15.w),
+              Divider(color: AppColors.black, thickness: 1),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    filteredPlaces.sort((a, b) {
+                      return b['date'].compareTo(
+                          a['date']); // Сортировка по дате (новые сначала)
+                    });
+                  });
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  height: 60.w,
+                  child: Center(
+                    child: Text(
+                      "New ones first",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.white,
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+              Divider(color: AppColors.black, thickness: 1),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    filteredPlaces.sort((a, b) {
+                      return a['date'].compareTo(
+                          b['date']); // Сортировка по дате (старые сначала)
+                    });
+                  });
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  height: 60.w,
+                  child: Center(
+                    child: Text(
+                      "The old ones first",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.white,
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20.w),
+              Center(
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: double.infinity,
+                    height: 40.w,
+                    decoration: BoxDecoration(
+                      color: AppColors.gradientTextRed1,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "Cancel",
+                        style: theme.bodySmall?.copyWith(fontSize: 18.sp),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20.w),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void deletePlace(int index) async {
+    setState(() {
+      filteredPlaces
+          .removeAt(index); // Удаляем место из отфильтрованного списка
+      places = List.from(filteredPlaces); // Обновляем исходный список
+    });
+
+    // Сохраняем обновленный список
+    await DataStorage.savePlaces(places);
+  }
+
+  Future<String> getFullPath(String relativePath) async {
+    if (relativePath.isEmpty) {
+      return ''; // Возвращаем пустую строку, если путь отсутствует
+    }
+    final directory = await getApplicationDocumentsDirectory();
+    return '${directory.path}/$relativePath';
+  }
+
+  Future<File?> loadImage(String? relativePath) async {
+    if (relativePath == null || relativePath.isEmpty) {
+      return null;
+    }
+    final fullPath = await getFullPath(relativePath);
+    final file = File(fullPath);
+
+    if (await file.exists()) {
+      return file;
+    } else {
+      print("Файл не найден: $fullPath");
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextTheme theme = Theme.of(context).textTheme;
     final customTheme = Theme.of(context).extension<CustomTheme>();
-    return Scaffold(
-      body: body(theme: theme, customTheme: customTheme),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus(); // Снимает фокус с любого TextField
+      },
+      child: Scaffold(
+        body: body(theme: theme, customTheme: customTheme),
+      ),
     );
   }
 
@@ -234,49 +420,66 @@ class _HomePageState extends State<HomePage> {
         children: [
           searchField(theme: theme, customTheme: customTheme),
           SizedBox(height: 20.w),
-          Row(
-            children: [
-              Image.asset(AppImages.pointOnMap),
-              SizedBox(
-                width: 10.w,
-              ),
-              Text(
-                "List of places",
-                style: theme.bodySmall?.copyWith(
-                  color: AppColors.white,
-                ),
-              ),
-            ],
-          ),
+          filteredPlaces.isNotEmpty
+              ? Row(
+                  children: [
+                    Image.asset(AppImages.pointOnMap),
+                    SizedBox(
+                      width: 10.w,
+                    ),
+                    Text(
+                      "List of places",
+                      style: theme.bodySmall?.copyWith(
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ],
+                )
+              : const SizedBox(),
           SizedBox(height: 10.w),
           Expanded(
-            child: ListView(
-              children: [
-                placeCard(
-                  imagePath: AppImages
-                      .onboarding1, // Замените на правильный путь к изображению
-                  title: "The Lost Island",
-                  type: "Forest",
-                  hashtag: "#LostWorld",
-                ),
-                SizedBox(height: 15.w),
-                placeCard(
-                  imagePath: AppImages
-                      .onboarding2, // Замените на правильный путь к изображению
-                  title: "Silent hill",
-                  type: "City",
-                  hashtag: "#MysteruWorld",
-                ),
-                SizedBox(height: 15.w),
-                placeCard(
-                  imagePath: AppImages
-                      .onboarding3, // Замените на правильный путь к изображению
-                  title: "Salty lake",
-                  type: "Lake",
-                  hashtag: "#Dreamplace",
-                ),
-              ],
+            child: ListView.builder(
+              itemCount: filteredPlaces.length <= 3 ? filteredPlaces.length : 3,
+              itemBuilder: (context, index) {
+                return placeCard(
+                  theme: theme,
+                  customTheme: customTheme,
+                  imagePath: filteredPlaces[index]['image'],
+                  title: filteredPlaces[index]['name'],
+                  type: filteredPlaces[index]['type'],
+                  colorType: filteredPlaces[index]['typeColor'],
+                  hashtag: filteredPlaces[index]['tag'],
+                  index: index,
+                );
+              },
             ),
+            // ListView(
+            //   children: [
+            //     placeCard(
+            //       imagePath: AppImages
+            //           .onboarding1, // Замените на правильный путь к изображению
+            //       title: "The Lost Island",
+            //       type: "Forest",
+            //       hashtag: "#LostWorld",
+            //     ),
+            //     SizedBox(height: 15.w),
+            //     placeCard(
+            //       imagePath: AppImages
+            //           .onboarding2, // Замените на правильный путь к изображению
+            //       title: "Silent hill",
+            //       type: "City",
+            //       hashtag: "#MysteruWorld",
+            //     ),
+            //     SizedBox(height: 15.w),
+            //     placeCard(
+            //       imagePath: AppImages
+            //           .onboarding3, // Замените на правильный путь к изображению
+            //       title: "Salty lake",
+            //       type: "Lake",
+            //       hashtag: "#Dreamplace",
+            //     ),
+            //   ],
+            // ),
           ),
         ],
       ),
@@ -298,6 +501,11 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Expanded(
                   child: TextField(
+                    style: theme.bodySmall?.copyWith(
+                      color: AppColors.white,
+                    ),
+                    onChanged: updateSearch,
+                    cursorColor: AppColors.white,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: AppColors.darkGrey,
@@ -321,9 +529,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    // Здесь можно добавить функционал для обновления данных
-                  },
+                  onTap: showSortOptions,
                   child: Container(
                     width: 50.w,
                     height: 50.w,
@@ -353,7 +559,13 @@ class _HomePageState extends State<HomePage> {
                   title: "Adding a place",
                 );
               }),
-            );
+            ).then((value) async {
+              places = await DataStorage.getPlaces();
+              filteredPlaces = List.from(places);
+              print(places);
+              setState(() {});
+              FocusScope.of(context).unfocus();
+            });
           },
           child: ShaderMask(
             shaderCallback: (bounds) {
@@ -400,13 +612,18 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget placeCard({
+    required TextTheme theme,
+    required customTheme,
     required String imagePath,
     required String title,
     required String type,
+    required String colorType,
     required String hashtag,
+    required int index,
   }) {
     return Container(
-      padding: const EdgeInsets.all(15),
+      height: 110.w,
+      margin: EdgeInsets.only(bottom: 15.w),
       decoration: BoxDecoration(
         color: AppColors.darkGrey,
         borderRadius: BorderRadius.circular(20),
@@ -414,46 +631,402 @@ class _HomePageState extends State<HomePage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: Image.asset(
-              imagePath,
-              width: 100.w,
-              height: 100.w,
-              fit: BoxFit.cover,
-            ),
+          FutureBuilder<String>(
+            future: getFullPath(imagePath),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Container(
+                  width: 90.w,
+                  height: 110.w,
+                  child: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Container(
+                  width: 90.w,
+                  height: 110.w,
+                  color: AppColors.grey,
+                  child: Icon(Icons.image, color: AppColors.white),
+                );
+              }
+              return ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  topLeft: Radius.circular(20),
+                ),
+                child: Image.file(
+                  File(snapshot.data!),
+                  width: 90.w,
+                  height: 110.w,
+                  fit: BoxFit.cover,
+                ),
+              );
+            },
           ),
-          SizedBox(width: 15.w),
+          // SizedBox(width: 15.w),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.white,
-                      ),
-                ),
-                SizedBox(height: 5.w),
-                Text(
-                  type,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.grey,
-                      ),
-                ),
-                SizedBox(height: 5.w),
-                Text(
-                  hashtag,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.grey,
-                      ),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: theme.bodySmall?.copyWith(
+                      color: AppColors.white,
+                      fontSize: 18.sp,
+                    ),
+                  ),
+                  SizedBox(height: 5.w),
+                  Text(
+                    type,
+                    style: theme.bodySmall?.copyWith(
+                      color: Color(int.parse(colorType)),
+                    ),
+                  ),
+                  SizedBox(height: 5.w),
+                  Text(
+                    hashtag,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.grey,
+                        ),
+                  ),
+                ],
+              ),
             ),
           ),
-          Icon(
-            Icons.more_vert,
-            color: AppColors.grey,
+          Padding(
+            padding: EdgeInsets.only(right: 10.w, top: 10.w),
+            child: InkWell(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  barrierDismissible:
+                      true, // Позволяет закрывать диалог при нажатии вне него
+                  builder: (context) {
+                    final theme = Theme.of(context).textTheme;
+
+                    return Dialog(
+                      backgroundColor: Colors.transparent, // Прозрачный фон
+                      insetPadding: EdgeInsets.zero, // Убираем отступы
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pop(
+                              context); // Закрывает диалог при нажатии за пределами
+                        },
+                        child: Container(
+                          color:
+                              Colors.transparent, // Прозрачный фон для области
+                          child: Center(
+                            child: GestureDetector(
+                              onTap:
+                                  () {}, // Блокирует закрытие при нажатии внутри
+                              child: Container(
+                                width: 105.w, // Фиксированная ширина окна
+                                decoration: BoxDecoration(
+                                  color: AppColors.darkGrey,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: SingleChildScrollView(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(15),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            FocusScope.of(context).unfocus();
+                                          },
+                                          child: Text(
+                                            'Edit',
+                                            style: theme.bodySmall,
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 10.w,
+                                          ),
+                                          child: Divider(
+                                            height: 1,
+                                            thickness: 1,
+                                            color: AppColors.black,
+                                          ),
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            FocusScope.of(context).unfocus();
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) {
+                                                return AlertDialog(
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
+                                                  ),
+                                                  backgroundColor:
+                                                      AppColors.darkGrey,
+                                                  content: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        'Delete',
+                                                        style: theme.titleMedium
+                                                            ?.copyWith(
+                                                          color: AppColors
+                                                              .gradientTextRed1,
+                                                          fontSize: 22.w,
+                                                        ),
+                                                      ),
+                                                      SizedBox(height: 10),
+                                                      Text(
+                                                        'Do you really want to delete the place?',
+                                                        style: theme.bodySmall,
+                                                      ),
+                                                      SizedBox(height: 20),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: [
+                                                          Expanded(
+                                                            child:
+                                                                GestureDetector(
+                                                              onTap: () {
+                                                                Navigator.pop(
+                                                                    context); // Закрыть диалог
+                                                                FocusScope.of(
+                                                                        context)
+                                                                    .unfocus();
+                                                              },
+                                                              child: ShaderMask(
+                                                                shaderCallback:
+                                                                    (bounds) {
+                                                                  return customTheme
+                                                                          ?.secondaryGradient
+                                                                          .createShader(
+                                                                        Rect.fromLTWH(
+                                                                            0,
+                                                                            0,
+                                                                            bounds.width,
+                                                                            bounds.height),
+                                                                      ) ??
+                                                                      LinearGradient(
+                                                                          colors: [
+                                                                            AppColors.white,
+                                                                            AppColors.white
+                                                                          ]).createShader(
+                                                                        Rect.fromLTWH(
+                                                                            0,
+                                                                            0,
+                                                                            bounds.width,
+                                                                            bounds.height),
+                                                                      );
+                                                                },
+                                                                child:
+                                                                    Container(
+                                                                  padding: EdgeInsets
+                                                                      .symmetric(
+                                                                          vertical:
+                                                                              10),
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    border:
+                                                                        Border
+                                                                            .all(
+                                                                      width: 1,
+                                                                      color: AppColors
+                                                                          .white,
+                                                                    ),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            20),
+                                                                  ),
+                                                                  child: Center(
+                                                                    child: Text(
+                                                                        'Cancel',
+                                                                        style: theme
+                                                                            .bodySmall),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(width: 10),
+                                                          Expanded(
+                                                            child:
+                                                                GestureDetector(
+                                                              onTap: () {
+                                                                deletePlace(
+                                                                    index);
+                                                                Navigator.pop(
+                                                                    context); // Закрыть диалог
+                                                                FocusScope.of(
+                                                                        context)
+                                                                    .unfocus();
+                                                              },
+                                                              child: Container(
+                                                                padding: EdgeInsets
+                                                                    .symmetric(
+                                                                        vertical:
+                                                                            10),
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: AppColors
+                                                                      .gradientTextRed1,
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              20),
+                                                                ),
+                                                                child: Center(
+                                                                  child: Text(
+                                                                    'Delete',
+                                                                    style: theme
+                                                                        .bodySmall
+                                                                        ?.copyWith(
+                                                                      color: AppColors
+                                                                          .white,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          },
+                                          child: Text(
+                                            'Delete',
+                                            style: theme.bodySmall?.copyWith(
+                                              color: AppColors.gradientTextRed1,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+                // showDialog(
+                //   context: context,
+                //   builder: (context) {
+                //     return AlertDialog(
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(20),
+                //       ),
+                //       backgroundColor: AppColors.darkGrey,
+                //       content: Column(
+                //         mainAxisSize: MainAxisSize.min,
+                //         children: [
+                //           Text(
+                //             'Delete',
+                //             style: theme.titleMedium?.copyWith(
+                //               color: AppColors.gradientTextRed1,
+                //               fontSize: 22.w,
+                //             ),
+                //           ),
+                //           SizedBox(height: 10),
+                //           Text(
+                //             'Do you really want to delete the data?',
+                //             style: theme.bodySmall,
+                //           ),
+                //           SizedBox(height: 20),
+                //           Row(
+                //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //             children: [
+                //               Expanded(
+                //                 child: GestureDetector(
+                //                   onTap: () {
+                //                     Navigator.pop(context); // Закрыть диалог
+                //                   },
+                //                   child: ShaderMask(
+                //                     shaderCallback: (bounds) {
+                //                       return customTheme?.secondaryGradient
+                //                               .createShader(
+                //                             Rect.fromLTWH(0, 0, bounds.width,
+                //                                 bounds.height),
+                //                           ) ??
+                //                           LinearGradient(colors: [
+                //                             AppColors.white,
+                //                             AppColors.white
+                //                           ]).createShader(
+                //                             Rect.fromLTWH(0, 0, bounds.width,
+                //                                 bounds.height),
+                //                           );
+                //                     },
+                //                     child: Container(
+                //                       padding:
+                //                           EdgeInsets.symmetric(vertical: 10),
+                //                       decoration: BoxDecoration(
+                //                         border: Border.all(
+                //                           width: 1,
+                //                           color: AppColors.white,
+                //                         ),
+                //                         borderRadius: BorderRadius.circular(20),
+                //                       ),
+                //                       child: Center(
+                //                         child: Text('Cancel',
+                //                             style: theme.bodySmall),
+                //                       ),
+                //                     ),
+                //                   ),
+                //                 ),
+                //               ),
+                //               SizedBox(width: 10),
+                //               Expanded(
+                //                 child: GestureDetector(
+                //                   onTap: () {
+                //                     // Логика удаления данных
+                //                     Navigator.pop(context); // Закрыть диалог
+                //                   },
+                //                   child: Container(
+                //                     padding: EdgeInsets.symmetric(vertical: 10),
+                //                     decoration: BoxDecoration(
+                //                       color: AppColors.gradientTextRed1,
+                //                       borderRadius: BorderRadius.circular(20),
+                //                     ),
+                //                     child: Center(
+                //                       child: Text(
+                //                         'Delete',
+                //                         style: theme.bodySmall?.copyWith(
+                //                           color: AppColors.white,
+                //                         ),
+                //                       ),
+                //                     ),
+                //                   ),
+                //                 ),
+                //               ),
+                //             ],
+                //           ),
+                //         ],
+                //       ),
+                //     );
+                //   },
+                // );
+              },
+              child: Image.asset(AppImages.dotHoriz),
+            ),
           ),
         ],
       ),

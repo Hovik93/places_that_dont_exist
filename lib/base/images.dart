@@ -17,4 +17,5 @@ class AppImages {
   static const String forward = 'assets/icons/forward.png';
   static const String pointOnMap = 'assets/icons/pointOnMap.png';
   static const String camera = 'assets/icons/camera.png';
+  static const String dotHoriz = 'assets/icons/dotHoriz.png';
 }
