@@ -6,6 +6,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:places_that_dont_exist/base/images.dart';
 import 'package:places_that_dont_exist/data/quotes_data.dart';
 import 'package:places_that_dont_exist/theme/theme.dart';
+import 'package:places_that_dont_exist/ui/data_storage.dart';
+import 'package:places_that_dont_exist/ui/pages/quotes/favorite_quotes.dart';
 import 'package:places_that_dont_exist/ui/pages/quotes/quotes.dart';
 import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
 
@@ -15,14 +17,10 @@ import 'package:places_that_dont_exist/base/colors.dart';
 class InspirationalQuotesScreen extends StatefulWidget {
   String? title;
   String? quoteOfTheDay;
-  String? quoteAuthor;
-  bool? favorite;
   InspirationalQuotesScreen({
     super.key,
     this.title,
     this.quoteOfTheDay,
-    this.quoteAuthor,
-    this.favorite,
   });
 
   @override
@@ -33,14 +31,37 @@ class InspirationalQuotesScreen extends StatefulWidget {
 class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
   TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> filteredQuotesList = [];
+  bool isFavorite = false;
+  String? author;
   Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    // По умолчанию отфильтрованный список такой же, как оригинальный
+    // Инициализация поиска и загрузка данных
     filteredQuotesList = quotesList;
     _searchController.addListener(_onSearchChanged);
+
+    // Проверяем статус `favorite` для цитаты дня
+    _loadFavoriteStatus();
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    final storedQuotes = await DataStorage.getQuotes();
+    final allQuotes = storedQuotes.isNotEmpty ? storedQuotes : quotesList;
+
+    final matchingQuote =
+        allQuotes.expand((category) => category['content']).firstWhere(
+              (quote) => quote['quote'] == widget.quoteOfTheDay,
+              orElse: () => null,
+            );
+
+    if (matchingQuote != null) {
+      setState(() {
+        isFavorite = matchingQuote['favorite'] ?? false;
+        author = matchingQuote['author'] ?? 'Unknown';
+      });
+    }
   }
 
   @override
@@ -48,6 +69,37 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void toggleFavorite(String quoteText) async {
+    final updatedQuotes = quotesList.map((category) {
+      final updatedContent = (category['content'] as List).map((quote) {
+        if (quote['quote'] == quoteText) {
+          return {
+            ...quote,
+            'favorite': !(quote['favorite'] ?? false),
+          };
+        }
+        return quote;
+      }).toList();
+
+      return {
+        ...category,
+        'content': updatedContent,
+      };
+    }).toList();
+
+    quotesList = List<Map<String, dynamic>>.from(updatedQuotes);
+
+    // Сохраняем изменения
+    await DataStorage.saveQuotes(quotesList);
+
+    // Обновляем локальный статус
+    if (widget.quoteOfTheDay == quoteText) {
+      setState(() {
+        isFavorite = !isFavorite;
+      });
+    }
   }
 
   void _onSearchChanged() {
@@ -114,7 +166,7 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
           children: [
             GestureDetector(
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context, isFavorite);
               },
               child: Icon(Icons.arrow_back_ios_new, color: AppColors.grey),
             ),
@@ -158,10 +210,9 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
                   MaterialPageRoute(builder: (_) {
                     return QuotesScreen(
                       title: filteredQuotesList[index]['type'],
-                      data: filteredQuotesList[index],
                     );
                   }),
-                );
+                ).then((onValue) => {_loadFavoriteStatus()});
               },
               child: Container(
                 padding: EdgeInsets.all(14.w),
@@ -230,8 +281,12 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
           Row(
             children: [
               GestureDetector(
-                onTap: () {},
-                child: widget.favorite == true
+                onTap: () {
+                  if (widget.quoteOfTheDay != null) {
+                    toggleFavorite(widget.quoteOfTheDay!);
+                  }
+                },
+                child: isFavorite
                     ? Image.asset(AppImages.star)
                     : Image.asset(
                         AppImages.star,
@@ -243,7 +298,7 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
               ),
               Expanded(
                 child: Text(
-                  widget.quoteOfTheDay ?? '',
+                  "“${widget.quoteOfTheDay ?? ''}”",
                   style: theme.titleMedium?.copyWith(
                     fontSize: 20,
                   ),
@@ -256,7 +311,7 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
-                widget.quoteAuthor ?? '',
+                author ?? '',
                 style: theme.bodySmall?.copyWith(color: AppColors.grey),
               ),
               SizedBox(
@@ -297,26 +352,38 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
             ),
           ),
         ),
-        ShaderMask(
-          shaderCallback: (bounds) {
-            return customTheme?.secondaryGradient.createShader(
-                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                ) ??
-                const LinearGradient(colors: [Colors.white, Colors.white])
-                    .createShader(
-                  Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) {
+                return FavoriteQuotesScreen(
+                  title: "Favorite quotes",
                 );
+              }),
+            ).then((onValue) => {_loadFavoriteStatus()});
           },
-          child: Container(
-            width: 52.w,
-            height: 52.w,
-            margin: EdgeInsets.only(left: 15.w),
-            decoration: BoxDecoration(
-              border: Border.all(width: 1, color: AppColors.white),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Center(
-              child: Image.asset(AppImages.star),
+          child: ShaderMask(
+            shaderCallback: (bounds) {
+              return customTheme?.secondaryGradient.createShader(
+                    Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                  ) ??
+                  const LinearGradient(colors: [Colors.white, Colors.white])
+                      .createShader(
+                    Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                  );
+            },
+            child: Container(
+              width: 52.w,
+              height: 52.w,
+              margin: EdgeInsets.only(left: 15.w),
+              decoration: BoxDecoration(
+                border: Border.all(width: 1, color: AppColors.white),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Center(
+                child: Image.asset(AppImages.star),
+              ),
             ),
           ),
         )

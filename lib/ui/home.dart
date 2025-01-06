@@ -35,11 +35,23 @@ class _HomePageState extends State<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       places = await DataStorage.getPlaces();
       filteredPlaces = List.from(places);
+
+      // Загружаем цитаты из SharedPreferences
+      final storedQuotes = await DataStorage.getQuotes();
+      if (storedQuotes.isEmpty) {
+        // Если цитаты не сохранены, сохраняем их
+        await DataStorage.saveQuotes(quotesList);
+        quotesList = List.from(quotesList);
+      } else {
+        // Если цитаты уже есть, загружаем их
+        quotesList = storedQuotes;
+      }
+
+      // Устанавливаем случайную цитату дня
+      randomQuote = getRandomQuote();
+
       setState(() {});
-      print(places);
     });
-    randomQuote = getRandomQuote();
-    super.initState();
   }
 
   Map<String, dynamic> getRandomQuote() {
@@ -51,6 +63,43 @@ class _HomePageState extends State<HomePage> {
       "author": randomQuote['author'],
       "favorite": randomQuote['favorite'],
     };
+  }
+
+  void toggleFavorite(String quoteText) async {
+    // Обновляем quotesList
+    final updatedQuotes = quotesList.map((category) {
+      final updatedContent = (category['content'] as List).map((quote) {
+        if (quote['quote'] == quoteText) {
+          // Обновляем только нужную цитату
+          return {
+            ...quote,
+            'favorite': !(quote['favorite'] ?? false),
+          };
+        }
+        return quote;
+      }).toList();
+
+      return {
+        ...category,
+        'content': updatedContent,
+      };
+    }).toList();
+
+    quotesList = List<Map<String, dynamic>>.from(updatedQuotes);
+
+    // Сохраняем изменения в SharedPreferences
+    await DataStorage.saveQuotes(quotesList);
+
+    // Обновляем randomQuote, если его quoteText совпадает
+    if (randomQuote?['quote'] == quoteText) {
+      randomQuote = {
+        ...randomQuote!,
+        'favorite': !(randomQuote!['favorite'] ?? false),
+      };
+    }
+
+    // Обновляем UI
+    setState(() {});
   }
 
   void updateSearch(String query) {
@@ -308,12 +357,23 @@ class _HomePageState extends State<HomePage> {
                           MaterialPageRoute(builder: (_) {
                             return InspirationalQuotesScreen(
                               title: "Inspirational quotes",
-                              quoteOfTheDay: '“${randomQuote?['quote'] ?? ''}”',
-                              quoteAuthor: randomQuote?['author'] ?? '',
-                              favorite: randomQuote?['favorite'] ?? false,
+                              quoteOfTheDay: '${randomQuote?['quote'] ?? ''}',
                             );
                           }),
-                        );
+                        ).then((updatedFavorite) async {
+                          if (updatedFavorite != null && randomQuote != null) {
+                            // Обновляем только статус избранного для цитаты дня
+                            randomQuote!['favorite'] = updatedFavorite;
+
+                            // Загружаем обновленные данные из SharedPreferences
+                            final storedQuotes = await DataStorage.getQuotes();
+                            if (storedQuotes.isNotEmpty) {
+                              quotesList = storedQuotes;
+                            }
+
+                            setState(() {});
+                          }
+                        });
                       },
                       child: ShaderMask(
                         shaderCallback: (bounds) {
@@ -428,7 +488,10 @@ class _HomePageState extends State<HomePage> {
           Row(
             children: [
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  toggleFavorite(randomQuote?['quote'] ?? '');
+                  setState(() {});
+                },
                 child: randomQuote?['favorite'] == true
                     ? Image.asset(AppImages.star)
                     : Image.asset(

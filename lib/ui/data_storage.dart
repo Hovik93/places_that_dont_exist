@@ -4,6 +4,7 @@ import 'dart:convert';
 class DataStorage {
   static const String _onboardingKey = 'onboarding_seen';
   static const String _placesKey = 'saved_places';
+  static const String _quotesKey = 'saved_quotes';
 
   static Future<bool> isOnboardingSeen() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -34,5 +35,20 @@ class DataStorage {
     return [];
   }
 
-  
+  // Сохранение quotesList в SharedPreferences
+  static Future<void> saveQuotes(List<Map<String, dynamic>> quotes) async {
+    final prefs = await SharedPreferences.getInstance();
+    final encodedQuotes = jsonEncode(quotes); // Кодируем в строку JSON
+    await prefs.setString('quotesList', encodedQuotes); // Сохраняем
+  }
+
+  // Получение quotesList из SharedPreferences
+  static Future<List<Map<String, dynamic>>> getQuotes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedQuotes = prefs.getString('quotesList');
+    if (storedQuotes != null) {
+      return List<Map<String, dynamic>>.from(jsonDecode(storedQuotes));
+    }
+    return [];
+  }
 }

@@ -12,18 +12,18 @@ import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
 import 'package:places_that_dont_exist/base/colors.dart';
 
 // ignore: must_be_immutable
-class QuotesScreen extends StatefulWidget {
+class FavoriteQuotesScreen extends StatefulWidget {
   String? title;
-  QuotesScreen({
+  FavoriteQuotesScreen({
     super.key,
     this.title,
   });
 
   @override
-  State<QuotesScreen> createState() => _QuotesScreenState();
+  State<FavoriteQuotesScreen> createState() => _FavoriteQuotesScreenState();
 }
 
-class _QuotesScreenState extends State<QuotesScreen> {
+class _FavoriteQuotesScreenState extends State<FavoriteQuotesScreen> {
   TextEditingController _searchController = TextEditingController();
   List<dynamic> quotesListForTitle = [];
   List<dynamic> filteredQuotesList = [];
@@ -32,33 +32,24 @@ class _QuotesScreenState extends State<QuotesScreen> {
   @override
   void initState() {
     super.initState();
-    // По умолчанию отфильтрованный список такой же, как оригинальный
-    _loadQuotesForTitle();
+    _loadFavoriteQuotes();
     _searchController.addListener(_onSearchChanged);
   }
 
-  Future<void> _loadQuotesForTitle() async {
+  Future<void> _loadFavoriteQuotes() async {
     final storedQuotes = await DataStorage.getQuotes();
-    final allQuotes = storedQuotes.isNotEmpty ? storedQuotes : quotesList;
+    List<dynamic> favoriteQuotes = [];
 
-    // Найти категорию с title
-    final Map<String, dynamic>? matchingCategory =
-        allQuotes.cast<Map<String, dynamic>?>().firstWhere(
-              (category) => category?['type'] == widget.title,
-              orElse: () => null, // Возвращаем null, если категория не найдена
-            );
-
-    if (matchingCategory != null) {
-      setState(() {
-        quotesListForTitle = matchingCategory['content'] ?? [];
-        filteredQuotesList = List.from(quotesListForTitle);
-      });
-    } else {
-      setState(() {
-        quotesListForTitle = [];
-        filteredQuotesList = [];
-      });
+    for (var category in storedQuotes) {
+      final content = category['content'] as List<dynamic>;
+      favoriteQuotes
+          .addAll(content.where((quote) => quote['favorite'] == true));
     }
+
+    setState(() {
+      quotesListForTitle = favoriteQuotes;
+      filteredQuotesList = List.from(favoriteQuotes);
+    });
   }
 
   @override
@@ -84,19 +75,29 @@ class _QuotesScreenState extends State<QuotesScreen> {
       filteredQuotesList = List.from(updatedQuotes);
     });
 
-    // Обновляем в общем списке quotesList
-    quotesList = quotesList.map((category) {
-      if (category['type'] == widget.title) {
-        return {
-          ...category,
-          'content': updatedQuotes,
-        };
-      }
-      return category;
+    // Обновляем в общем списке quotesList в SharedPreferences
+    final storedQuotes = await DataStorage.getQuotes();
+    final updatedStoredQuotes = storedQuotes.map((category) {
+      final updatedContent =
+          (category['content'] as List<dynamic>).map((quote) {
+        if (quote['quote'] == quoteText) {
+          return {
+            ...quote,
+            'favorite': !(quote['favorite'] ?? false),
+          };
+        }
+        return quote;
+      }).toList();
+
+      return {
+        ...category,
+        'content': updatedContent,
+      };
     }).toList();
 
-    // Сохраняем изменения
-    await DataStorage.saveQuotes(quotesList);
+    await DataStorage.saveQuotes(
+        List<Map<String, dynamic>>.from(updatedStoredQuotes));
+    _loadFavoriteQuotes(); // Перезагружаем список избранного
   }
 
   void _onSearchChanged() {
