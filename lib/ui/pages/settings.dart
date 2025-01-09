@@ -171,8 +171,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     Expanded(
                                       child: GestureDetector(
                                         onTap: () {
-                                          Navigator.pop(
-                                              context); // Закрыть диалог
+                                          Navigator.pop(context);
                                         },
                                         child: ShaderMask(
                                           shaderCallback: (bounds) {
@@ -215,17 +214,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: 10),
+                                    SizedBox(width: 10.w),
                                     Expanded(
                                       child: GestureDetector(
                                         onTap: () {
-                                          // Логика удаления данных
-                                          Navigator.pop(
-                                              context); // Закрыть диалог
+                                          Navigator.pop(context);
                                         },
                                         child: Container(
                                           padding: EdgeInsets.symmetric(
-                                              vertical: 10),
+                                              vertical: 10.w),
                                           decoration: BoxDecoration(
                                             color: AppColors.gradientTextRed1,
                                             borderRadius:

@@ -38,7 +38,6 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
       places = await DataStorage.getPlaces();
       filteredPlaces = List.from(places);
       setState(() {});
-      print(places);
     });
 
     super.initState();
@@ -84,8 +83,7 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
                 onTap: () {
                   setState(() {
                     filteredPlaces.sort((a, b) {
-                      return b['date'].compareTo(
-                          a['date']); // Сортировка по дате (новые сначала)
+                      return b['date'].compareTo(a['date']);
                     });
                   });
                   Navigator.pop(context);
@@ -107,8 +105,7 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
                 onTap: () {
                   setState(() {
                     filteredPlaces.sort((a, b) {
-                      return a['date'].compareTo(
-                          b['date']); // Сортировка по дате (старые сначала)
+                      return a['date'].compareTo(b['date']);
                     });
                   });
                   Navigator.pop(context);
@@ -155,18 +152,16 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
 
   void deletePlace(int index) async {
     setState(() {
-      filteredPlaces
-          .removeAt(index); // Удаляем место из отфильтрованного списка
-      places = List.from(filteredPlaces); // Обновляем исходный список
+      filteredPlaces.removeAt(index);
+      places = List.from(filteredPlaces);
     });
 
-    // Сохраняем обновленный список
     await DataStorage.savePlaces(places);
   }
 
   Future<String> getFullPath(String relativePath) async {
     if (relativePath.isEmpty) {
-      return ''; // Возвращаем пустую строку, если путь отсутствует
+      return '';
     }
     final directory = await getApplicationDocumentsDirectory();
     return '${directory.path}/$relativePath';
@@ -193,7 +188,7 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
     final customTheme = Theme.of(context).extension<CustomTheme>();
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus(); // Снимает фокус с любого TextField
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         body: body(theme: theme, customTheme: customTheme),
@@ -219,7 +214,6 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
               child: appBar(theme: theme, customTheme: customTheme),
             ),
             Expanded(child: placesBlock(theme: theme, customTheme: customTheme))
-            // bodyContent(theme: theme, customTheme: customTheme),
           ],
         ),
       ),
@@ -374,7 +368,7 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: AppColors.darkGrey,
-                      suffixIcon: Icon(Icons.search, color: AppColors.white),
+                      suffixIcon: Image.asset(AppImages.search),
                       hintText: "Search",
                       hintStyle: theme.bodySmall?.copyWith(
                         color: AppColors.grey,
@@ -427,7 +421,6 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
             ).then((value) async {
               places = await DataStorage.getPlaces();
               filteredPlaces = List.from(places);
-              print(places);
               setState(() {});
               FocusScope.of(context).unfocus();
             });
@@ -530,7 +523,6 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
               );
             },
           ),
-          // SizedBox(width: 15.w),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(15),
@@ -569,28 +561,24 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
               onTap: () {
                 showDialog(
                   context: context,
-                  barrierDismissible:
-                      true, // Позволяет закрывать диалог при нажатии вне него
+                  barrierDismissible: true,
                   builder: (context) {
                     final theme = Theme.of(context).textTheme;
 
                     return Dialog(
-                      backgroundColor: Colors.transparent, // Прозрачный фон
-                      insetPadding: EdgeInsets.zero, // Убираем отступы
+                      backgroundColor: Colors.transparent,
+                      insetPadding: EdgeInsets.zero,
                       child: GestureDetector(
                         onTap: () {
-                          Navigator.pop(
-                              context); // Закрывает диалог при нажатии за пределами
+                          Navigator.pop(context);
                         },
                         child: Container(
-                          color:
-                              Colors.transparent, // Прозрачный фон для области
+                          color: Colors.transparent,
                           child: Center(
                             child: GestureDetector(
-                              onTap:
-                                  () {}, // Блокирует закрытие при нажатии внутри
+                              onTap: () {},
                               child: Container(
-                                width: 105.w, // Фиксированная ширина окна
+                                width: 105.w,
                                 decoration: BoxDecoration(
                                   color: AppColors.darkGrey,
                                   borderRadius: BorderRadius.circular(20),
@@ -667,7 +655,7 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
                                                                 GestureDetector(
                                                               onTap: () {
                                                                 Navigator.pop(
-                                                                    context); // Закрыть диалог
+                                                                    context);
                                                                 FocusScope.of(
                                                                         context)
                                                                     .unfocus();
@@ -733,7 +721,7 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
                                                                 deletePlace(
                                                                     index);
                                                                 Navigator.pop(
-                                                                    context); // Закрыть диалог
+                                                                    context);
                                                                 FocusScope.of(
                                                                         context)
                                                                     .unfocus();
@@ -793,102 +781,6 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
                     );
                   },
                 );
-                // showDialog(
-                //   context: context,
-                //   builder: (context) {
-                //     return AlertDialog(
-                //       shape: RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.circular(20),
-                //       ),
-                //       backgroundColor: AppColors.darkGrey,
-                //       content: Column(
-                //         mainAxisSize: MainAxisSize.min,
-                //         children: [
-                //           Text(
-                //             'Delete',
-                //             style: theme.titleMedium?.copyWith(
-                //               color: AppColors.gradientTextRed1,
-                //               fontSize: 22.w,
-                //             ),
-                //           ),
-                //           SizedBox(height: 10),
-                //           Text(
-                //             'Do you really want to delete the data?',
-                //             style: theme.bodySmall,
-                //           ),
-                //           SizedBox(height: 20),
-                //           Row(
-                //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //             children: [
-                //               Expanded(
-                //                 child: GestureDetector(
-                //                   onTap: () {
-                //                     Navigator.pop(context); // Закрыть диалог
-                //                   },
-                //                   child: ShaderMask(
-                //                     shaderCallback: (bounds) {
-                //                       return customTheme?.secondaryGradient
-                //                               .createShader(
-                //                             Rect.fromLTWH(0, 0, bounds.width,
-                //                                 bounds.height),
-                //                           ) ??
-                //                           LinearGradient(colors: [
-                //                             AppColors.white,
-                //                             AppColors.white
-                //                           ]).createShader(
-                //                             Rect.fromLTWH(0, 0, bounds.width,
-                //                                 bounds.height),
-                //                           );
-                //                     },
-                //                     child: Container(
-                //                       padding:
-                //                           EdgeInsets.symmetric(vertical: 10),
-                //                       decoration: BoxDecoration(
-                //                         border: Border.all(
-                //                           width: 1,
-                //                           color: AppColors.white,
-                //                         ),
-                //                         borderRadius: BorderRadius.circular(20),
-                //                       ),
-                //                       child: Center(
-                //                         child: Text('Cancel',
-                //                             style: theme.bodySmall),
-                //                       ),
-                //                     ),
-                //                   ),
-                //                 ),
-                //               ),
-                //               SizedBox(width: 10),
-                //               Expanded(
-                //                 child: GestureDetector(
-                //                   onTap: () {
-                //                     // Логика удаления данных
-                //                     Navigator.pop(context); // Закрыть диалог
-                //                   },
-                //                   child: Container(
-                //                     padding: EdgeInsets.symmetric(vertical: 10),
-                //                     decoration: BoxDecoration(
-                //                       color: AppColors.gradientTextRed1,
-                //                       borderRadius: BorderRadius.circular(20),
-                //                     ),
-                //                     child: Center(
-                //                       child: Text(
-                //                         'Delete',
-                //                         style: theme.bodySmall?.copyWith(
-                //                           color: AppColors.white,
-                //                         ),
-                //                       ),
-                //                     ),
-                //                   ),
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //         ],
-                //       ),
-                //     );
-                //   },
-                // );
               },
               child: Image.asset(AppImages.dotHoriz),
             ),

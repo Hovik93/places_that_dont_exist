@@ -29,15 +29,6 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
-  // final List<Map<String, dynamic>> markers = [
-  //   {'name': 'Marker 1', 'latitude': 48.8566, 'longitude': 2.3522}, // Париж
-  //   {
-  //     'name': 'Marker 2',
-  //     'latitude': 40.7128,
-  //     'longitude': -74.0060
-  //   }, // Нью-Йорк
-  //   {'name': 'Marker 3', 'latitude': 35.6895, 'longitude': 139.6917}, // Токио
-  // ];
   List<Map<String, dynamic>> places = [];
   List<Map<String, dynamic>> filteredPlaces = [];
 
@@ -54,18 +45,32 @@ class _MapPageState extends State<MapPage> {
 
   Future<String> getFullPath(String relativePath) async {
     if (relativePath.isEmpty) {
-      return ''; // Возвращаем пустую строку, если путь отсутствует
+      return '';
     }
     final directory = await getApplicationDocumentsDirectory();
     return '${directory.path}/$relativePath';
+  }
+
+  void _filterPlaces(String query) {
+    setState(() {
+      filteredPlaces = places
+          .where((place) =>
+              place['name'].toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final TextTheme theme = Theme.of(context).textTheme;
     final customTheme = Theme.of(context).extension<CustomTheme>();
-    return Scaffold(
-      body: body(theme: theme, customTheme: customTheme),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        body: body(theme: theme, customTheme: customTheme),
+      ),
     );
   }
 
@@ -297,17 +302,19 @@ class _MapPageState extends State<MapPage> {
         Positioned(
           top: 20.w,
           left: 10.w,
-          right: 10.w, // Добавляем ограничение ширины
+          right: 10.w,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
                   Expanded(
-                    // Расширяем TextField на всю доступную ширину
                     child: SizedBox(
                       height: 52.w,
                       child: TextField(
+                        onChanged: (value) {
+                          _filterPlaces(value);
+                        },
                         style: theme.bodySmall?.copyWith(
                           color: AppColors.white,
                         ),
@@ -315,8 +322,7 @@ class _MapPageState extends State<MapPage> {
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: AppColors.darkGrey,
-                          suffixIcon:
-                              Icon(Icons.search, color: AppColors.white),
+                          suffixIcon: Image.asset(AppImages.search),
                           hintText: "Search",
                           hintStyle: theme.bodySmall?.copyWith(
                             color: AppColors.grey,
@@ -342,9 +348,6 @@ class _MapPageState extends State<MapPage> {
                           );
                         }),
                       ).then((value) async {
-                        // places = await DataStorage.getPlaces();
-                        // filteredPlaces = List.from(places);
-                        // print(places);
                         setState(() {});
                         FocusScope.of(context).unfocus();
                       });
@@ -459,8 +462,10 @@ class _MapPageState extends State<MapPage> {
                 return Container(
                   width: 80.w,
                   height: 80.w,
-                  child: const Center(
-                    child: CircularProgressIndicator(),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.white,
+                    ),
                   ),
                 );
               }
@@ -475,14 +480,13 @@ class _MapPageState extends State<MapPage> {
               return Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Color(int.parse(colorType)), // Цвет рамки
-                    width: 2.w, // Толщина рамки
+                    color: Color(int.parse(colorType)),
+                    width: 2.w,
                   ),
-                  borderRadius: BorderRadius.circular(40.w), // Радиус рамки
+                  borderRadius: BorderRadius.circular(40.w),
                 ),
                 child: ClipRRect(
-                  borderRadius:
-                      BorderRadius.circular(40.w), // Радиус самого изображения
+                  borderRadius: BorderRadius.circular(40.w),
                   child: Image.file(
                     File(snapshot.data!),
                     width: 80.w,

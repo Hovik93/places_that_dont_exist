@@ -33,7 +33,6 @@ class _QuotesScreenState extends State<QuotesScreen> {
   @override
   void initState() {
     super.initState();
-    // По умолчанию отфильтрованный список такой же, как оригинальный
     _loadQuotesForTitle();
     _searchController.addListener(_onSearchChanged);
   }
@@ -42,11 +41,10 @@ class _QuotesScreenState extends State<QuotesScreen> {
     final storedQuotes = await DataStorage.getQuotes();
     final allQuotes = storedQuotes.isNotEmpty ? storedQuotes : quotesList;
 
-    // Найти категорию с title
     final Map<String, dynamic>? matchingCategory =
         allQuotes.cast<Map<String, dynamic>?>().firstWhere(
               (category) => category?['type'] == widget.title,
-              orElse: () => null, // Возвращаем null, если категория не найдена
+              orElse: () => null,
             );
 
     if (matchingCategory != null) {
@@ -85,7 +83,6 @@ class _QuotesScreenState extends State<QuotesScreen> {
       filteredQuotesList = List.from(updatedQuotes);
     });
 
-    // Обновляем в общем списке quotesList
     quotesList = quotesList.map((category) {
       if (category['type'] == widget.title) {
         return {
@@ -96,7 +93,6 @@ class _QuotesScreenState extends State<QuotesScreen> {
       return category;
     }).toList();
 
-    // Сохраняем изменения
     await DataStorage.saveQuotes(quotesList);
   }
 
@@ -120,7 +116,7 @@ class _QuotesScreenState extends State<QuotesScreen> {
     final customTheme = Theme.of(context).extension<CustomTheme>();
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus(); // Снимает фокус с любого TextField
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         body: body(theme: theme, customTheme: customTheme),
@@ -234,7 +230,6 @@ class _QuotesScreenState extends State<QuotesScreen> {
                             Expanded(
                               child: Text(
                                 '“${filteredQuotesList[index]['quote'] ?? ''}”',
-                                // maxLines: 3,
                                 style: theme.titleMedium?.copyWith(
                                   fontSize: 20,
                                 ),
@@ -278,12 +273,11 @@ class _QuotesScreenState extends State<QuotesScreen> {
         style: theme.bodySmall?.copyWith(
           color: AppColors.white,
         ),
-        // onChanged: updateSearch,
         cursorColor: AppColors.white,
         decoration: InputDecoration(
           filled: true,
           fillColor: AppColors.darkGrey,
-          suffixIcon: Icon(Icons.search, color: AppColors.white),
+          suffixIcon: Image.asset(AppImages.search),
           hintText: "Search",
           hintStyle: theme.bodySmall?.copyWith(
             color: AppColors.grey,

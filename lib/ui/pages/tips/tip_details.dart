@@ -38,14 +38,12 @@ class _TipsDetailsScreenState extends State<TipsDetailsScreen> {
   Future<void> _loadData() async {
     final storedTips = await DataStorage.getTips();
     if (storedTips.isEmpty) {
-      // Если данные отсутствуют, сохраняем начальные данные
       await DataStorage.saveTips(tipsData);
       tipsData = List.from(tipsData);
     } else {
       tipsData = storedTips;
     }
 
-    // Получаем данные текущей категории
     final selectedCategory =
         tipsData.firstWhere((category) => category['category'] == widget.title);
     filteredTips = List.from(selectedCategory['tips']);
@@ -76,7 +74,6 @@ class _TipsDetailsScreenState extends State<TipsDetailsScreen> {
       filteredTips[index]['favorite'] = !filteredTips[index]['favorite'];
     });
 
-    // Обновление данных в основном списке
     for (var category in tipsData) {
       if (category['category'] == widget.title) {
         category['tips'] = currentCategoryTips;
@@ -84,7 +81,6 @@ class _TipsDetailsScreenState extends State<TipsDetailsScreen> {
       }
     }
 
-    // Сохранение изменений в SharedPreferences
     await DataStorage.saveTips(tipsData);
   }
 
@@ -94,7 +90,7 @@ class _TipsDetailsScreenState extends State<TipsDetailsScreen> {
     final customTheme = Theme.of(context).extension<CustomTheme>();
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus(); // Снимает фокус с любого TextField
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         body: body(theme: theme, customTheme: customTheme),
@@ -138,8 +134,7 @@ class _TipsDetailsScreenState extends State<TipsDetailsScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              mainAxisSize:
-                  MainAxisSize.min, // Ограничение по минимальной ширине
+              mainAxisSize: MainAxisSize.min,
               children: [
                 GestureDetector(
                   onTap: () {
@@ -149,8 +144,7 @@ class _TipsDetailsScreenState extends State<TipsDetailsScreen> {
                 ),
                 const SizedBox(width: 10),
                 ConstrainedBox(
-                  constraints: BoxConstraints(
-                      maxWidth: 200.w), // Ограничиваем ширину текста
+                  constraints: BoxConstraints(maxWidth: 200.w),
                   child: Text(
                     widget.title ?? '',
                     overflow: TextOverflow.ellipsis,
@@ -215,7 +209,7 @@ class _TipsDetailsScreenState extends State<TipsDetailsScreen> {
         decoration: InputDecoration(
           filled: true,
           fillColor: AppColors.darkGrey,
-          suffixIcon: Icon(Icons.search, color: AppColors.white),
+          suffixIcon: Image.asset(AppImages.search),
           hintText: "Search",
           hintStyle: theme.bodySmall?.copyWith(
             color: AppColors.grey,

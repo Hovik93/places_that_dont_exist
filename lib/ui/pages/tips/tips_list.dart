@@ -57,7 +57,7 @@ class _TipsListScreenState extends State<TipsListScreen> {
     final customTheme = Theme.of(context).extension<CustomTheme>();
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus(); // Снимает фокус с любого TextField
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         body: body(theme: theme, customTheme: customTheme),
@@ -101,8 +101,7 @@ class _TipsListScreenState extends State<TipsListScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
-              mainAxisSize:
-                  MainAxisSize.min, // Ограничение по минимальной ширине
+              mainAxisSize: MainAxisSize.min,
               children: [
                 GestureDetector(
                   onTap: () {
@@ -112,8 +111,7 @@ class _TipsListScreenState extends State<TipsListScreen> {
                 ),
                 const SizedBox(width: 10),
                 ConstrainedBox(
-                  constraints: BoxConstraints(
-                      maxWidth: 200.w), // Ограничиваем ширину текста
+                  constraints: BoxConstraints(maxWidth: 200.w),
                   child: Text(
                     widget.title ?? '',
                     overflow: TextOverflow.ellipsis,
@@ -172,12 +170,11 @@ class _TipsListScreenState extends State<TipsListScreen> {
         style: theme.bodySmall?.copyWith(
           color: AppColors.white,
         ),
-        // onChanged: updateSearch,
         cursorColor: AppColors.white,
         decoration: InputDecoration(
           filled: true,
           fillColor: AppColors.darkGrey,
-          suffixIcon: Icon(Icons.search, color: AppColors.white),
+          suffixIcon: Image.asset(AppImages.search),
           hintText: "Search",
           hintStyle: theme.bodySmall?.copyWith(
             color: AppColors.grey,
@@ -200,9 +197,8 @@ class _TipsListScreenState extends State<TipsListScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: ListView.builder(
-        physics:
-            NeverScrollableScrollPhysics(), // Prevents inner scroll conflict
-        shrinkWrap: true, // Ensures the list takes up only the necessary space
+        physics: NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
         itemCount: filteredTipsData.length,
         itemBuilder: (context, index) {
           return GestureDetector(

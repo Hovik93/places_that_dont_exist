@@ -39,17 +39,14 @@ class _TipFavoriteScreenState extends State<TipFavoriteScreen> {
   }
 
   Future<void> _loadData() async {
-    final storedTips =
-        await DataStorage.getTips(); // Загружаем из SharedPreferences
+    final storedTips = await DataStorage.getTips();
     if (storedTips.isEmpty) {
-      await DataStorage.saveTips(
-          tipsData); // Если данных нет, сохраняем начальные
+      await DataStorage.saveTips(tipsData);
       tipsData = List.from(tipsData);
     } else {
-      tipsData = storedTips; // Обновляем локальные данные
+      tipsData = storedTips;
     }
 
-    // Обновляем список избранного после загрузки данных
     _filterFavoriteTips();
     setState(() {});
   }
@@ -65,7 +62,6 @@ class _TipFavoriteScreenState extends State<TipFavoriteScreen> {
       });
     }
 
-    // Обновляем список избранного
     _filterFavoriteTips();
   }
 
@@ -73,7 +69,6 @@ class _TipFavoriteScreenState extends State<TipFavoriteScreen> {
     final prefs = await SharedPreferences.getInstance();
     final encodedTips = jsonEncode(tipsData);
 
-    // Сохраняем данные в SharedPreferences
     await prefs.setString('tipsData', encodedTips);
   }
 
@@ -96,24 +91,20 @@ class _TipFavoriteScreenState extends State<TipFavoriteScreen> {
 
   void _toggleFavorite(Map<String, dynamic> tip) async {
     setState(() {
-      tip['favorite'] = !tip['favorite']; // Переключение статуса
+      tip['favorite'] = !tip['favorite'];
     });
 
-    // Поиск элемента по id и обновление данных
     for (var category in tipsData) {
       for (var item in category['tips']) {
         if (item['id'] == tip['id']) {
-          // Сравнение по id
           item['favorite'] = tip['favorite'];
           break;
         }
       }
     }
 
-    // Сохранение изменений в SharedPreferences
     await DataStorage.saveTips(tipsData);
 
-    // Обновление списка избранных
     _filterFavoriteTips();
   }
 
@@ -252,7 +243,7 @@ class _TipFavoriteScreenState extends State<TipFavoriteScreen> {
         decoration: InputDecoration(
           filled: true,
           fillColor: AppColors.darkGrey,
-          suffixIcon: Icon(Icons.search, color: AppColors.white),
+          suffixIcon: Image.asset(AppImages.search),
           hintText: "Search",
           hintStyle: theme.bodySmall?.copyWith(
             color: AppColors.grey,

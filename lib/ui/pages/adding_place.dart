@@ -28,7 +28,7 @@ class AddingPlaceScreen extends StatefulWidget {
 }
 
 class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
-  File? _image; // Для хранения выбранного изображения
+  File? _image;
   final ImagePicker _picker = ImagePicker();
 
   final List<Map<String, dynamic>> options = [
@@ -97,7 +97,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
           data['geographicalCharacteristics']?['climate'] ?? '';
       terrainController.text =
           data['geographicalCharacteristics']?['terrain'] ?? '';
-      _image = File(data['image']); // Загрузка изображения по пути
+      _image = File(data['image']);
       isMainTextFieldFilled = true;
     }
   }
@@ -106,14 +106,13 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
     FocusScope.of(context).unfocus();
   }
 
-  // Выбор изображения
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
-        maxWidth: 800, // Уменьшение ширины изображения
-        maxHeight: 800, // Уменьшение высоты изображения
-        imageQuality: 85, // Сжатие в процентах
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
       );
       if (pickedFile != null) {
         setState(() {
@@ -137,7 +136,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
     final savedImagePath = '${imageDirectory.path}/$fileName';
 
     await image.copy(savedImagePath);
-    return 'place_images/$fileName'; // Возвращаем относительный путь
+    return 'place_images/$fileName';
   }
 
   @override
@@ -146,7 +145,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
     final customTheme = Theme.of(context).extension<CustomTheme>();
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus(); // Снимает фокус с любого TextField
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         body: body(theme: theme, customTheme: customTheme),
@@ -450,7 +449,6 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                           typeColor = option["color"];
                           enterOtherController.clear();
                         });
-                        print(typeColor);
                       },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -486,9 +484,8 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                                   typeColor = option["color"];
                                   enterOtherController.clear();
                                 });
-                                print(typeColor);
                               },
-                              activeColor: Colors.white, // Замените на градиент
+                              activeColor: Colors.white,
                             ),
                           ),
                           Text(
@@ -524,7 +521,6 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                         setState(() {
                           selectedOption = value!;
                           typeColor = "0xffDE2D95";
-                          print(typeColor);
                         });
                       },
                       activeColor: Colors.white,
@@ -547,7 +543,6 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                       onChanged: (text) {
                         if (text.isNotEmpty) {
                           setState(() {
-                            // selectedOption = "Enter other";
                             enterOther = text;
                           });
                         }
@@ -607,11 +602,9 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
             ),
             onChanged: (text) {
               if (text.isEmpty) {
-                // Если поле пустое, ничего не добавляем
                 return;
               }
               if (!text.startsWith("#")) {
-                // Если текст не начинается с #, добавляем #
                 tagController.value = TextEditingValue(
                   text: "#$text",
                   selection: TextSelection.collapsed(offset: text.length + 1),
@@ -621,7 +614,6 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
             },
             onSubmitted: (text) {
               if (text == "#") {
-                // Если поле содержит только #, очищаем поле
                 tagController.clear();
               }
             },
@@ -663,7 +655,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
             controller: descriptionController,
             style: theme?.bodySmall?.copyWith(
               color: AppColors.white,
-              height: 1.5, // Высота строки
+              height: 1.5,
             ),
             onChanged: (_) => _onFieldChanged(),
             cursorColor: AppColors.white,
@@ -716,7 +708,7 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
             maxLines: null,
             style: theme?.bodySmall?.copyWith(
               color: AppColors.white,
-              height: 1.5, // Высота строки
+              height: 1.5,
             ),
             onChanged: (text) {
               setState(() {
@@ -736,8 +728,6 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
             ),
           ),
           SizedBox(height: !isMainTextFieldFilled ? 20.w : 10.w),
-
-          // Дополнительные секции
           if (isMainTextFieldFilled)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -843,12 +833,6 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
   }
 
   Widget buttonsBlock({required TextTheme? theme, required customTheme}) {
-    // bool allFieldsFilled = nameController.text.isNotEmpty &&
-    //     selectedOption.isNotEmpty &&
-    //     (selectedOption != "Enter other" || controller.text.isNotEmpty) &&
-    //     tagController.text.isNotEmpty &&
-    //     isMainTextFieldFilled;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -889,17 +873,14 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
           child: GestureDetector(
             onTap: allFieldsFilled
                 ? () async {
-                    // Map<String, dynamic> placeData = {};
                     String? relativePath;
 
                     try {
                       relativePath = await saveImage(_image!);
                       try {
-                        // Получаем директорию документов
                         final directory =
                             await getApplicationDocumentsDirectory();
 
-                        // Создаём папку, если она не существует
                         final imageDirectory =
                             Directory('${directory.path}/subcategory_images');
                         if (!await imageDirectory.exists()) {
@@ -909,7 +890,6 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                         print("Ошибка при сохранении изображения: $e");
                       }
 
-                      // Формируем объект с данными
                       final updatedData = {
                         'image': relativePath,
                         'name': nameController.text,
@@ -929,20 +909,17 @@ class _AddingPlaceScreenState extends State<AddingPlaceScreen> {
                             DateTime.now().toIso8601String(),
                       };
 
-                      // Получаем текущие данные и добавляем новый объект
                       final List<Map<String, dynamic>> places =
                           await DataStorage.getPlaces();
                       if (widget.placeData != null) {
                         final index = places.indexOf(widget.placeData ?? {});
                         if (index != -1) {
-                          places[index] = updatedData; // Обновляем элемент
+                          places[index] = updatedData; 
                         }
                       } else {
-                        // Если создаётся новый элемент
                         places.add(updatedData);
                       }
 
-                      // Сохраняем обновленный список
                       await DataStorage.savePlaces(places);
                       FocusScope.of(context).unfocus();
                       Navigator.pop(context, updatedData);

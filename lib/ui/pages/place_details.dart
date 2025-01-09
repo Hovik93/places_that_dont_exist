@@ -38,7 +38,6 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
       places = await DataStorage.getPlaces();
       filteredPlaces = List.from(places);
       setState(() {});
-      print(places);
     });
 
     super.initState();
@@ -46,7 +45,7 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
 
   Future<String> getFullPath(String relativePath) async {
     if (relativePath.isEmpty) {
-      return ''; // Возвращаем пустую строку, если путь отсутствует
+      return '';
     }
     final directory = await getApplicationDocumentsDirectory();
     return '${directory.path}/$relativePath';
@@ -97,8 +96,7 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
               child: SingleChildScrollView(
                 child: placesBlock(theme: theme, customTheme: customTheme),
               ),
-            )
-            // bodyContent(theme: theme, customTheme: customTheme),
+            ),
           ],
         ),
       ),

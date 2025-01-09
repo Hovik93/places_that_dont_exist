@@ -17,7 +17,6 @@ import 'package:places_that_dont_exist/ui/pages/quotes/inspirational_quotes.dart
 import 'package:places_that_dont_exist/ui/pages/settings.dart';
 import 'package:places_that_dont_exist/ui/pages/tips/tips_list.dart';
 import 'package:share_plus/share_plus.dart';
-// import 'package:share_plus/share_plus.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -40,18 +39,14 @@ class _HomePageState extends State<HomePage> {
       places = await DataStorage.getPlaces();
       filteredPlaces = List.from(places);
 
-      // Загружаем цитаты из SharedPreferences
       final storedQuotes = await DataStorage.getQuotes();
       if (storedQuotes.isEmpty) {
-        // Если цитаты не сохранены, сохраняем их
         await DataStorage.saveQuotes(quotesList);
         quotesList = List.from(quotesList);
       } else {
-        // Если цитаты уже есть, загружаем их
         quotesList = storedQuotes;
       }
 
-      // Устанавливаем случайную цитату дня
       randomQuote = getRandomQuote();
 
       setState(() {});
@@ -70,11 +65,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   void toggleFavorite(String quoteText) async {
-    // Обновляем quotesList
     final updatedQuotes = quotesList.map((category) {
       final updatedContent = (category['content'] as List).map((quote) {
         if (quote['quote'] == quoteText) {
-          // Обновляем только нужную цитату
           return {
             ...quote,
             'favorite': !(quote['favorite'] ?? false),
@@ -91,10 +84,8 @@ class _HomePageState extends State<HomePage> {
 
     quotesList = List<Map<String, dynamic>>.from(updatedQuotes);
 
-    // Сохраняем изменения в SharedPreferences
     await DataStorage.saveQuotes(quotesList);
 
-    // Обновляем randomQuote, если его quoteText совпадает
     if (randomQuote?['quote'] == quoteText) {
       randomQuote = {
         ...randomQuote!,
@@ -145,8 +136,7 @@ class _HomePageState extends State<HomePage> {
                 onTap: () {
                   setState(() {
                     filteredPlaces.sort((a, b) {
-                      return b['date'].compareTo(
-                          a['date']); // Сортировка по дате (новые сначала)
+                      return b['date'].compareTo(a['date']);
                     });
                   });
                   Navigator.pop(context);
@@ -168,8 +158,7 @@ class _HomePageState extends State<HomePage> {
                 onTap: () {
                   setState(() {
                     filteredPlaces.sort((a, b) {
-                      return a['date'].compareTo(
-                          b['date']); // Сортировка по дате (старые сначала)
+                      return a['date'].compareTo(b['date']);
                     });
                   });
                   Navigator.pop(context);
@@ -216,12 +205,10 @@ class _HomePageState extends State<HomePage> {
 
   void deletePlace(int index) async {
     setState(() {
-      filteredPlaces
-          .removeAt(index); // Удаляем место из отфильтрованного списка
-      places = List.from(filteredPlaces); // Обновляем исходный список
+      filteredPlaces.removeAt(index);
+      places = List.from(filteredPlaces);
     });
 
-    // Сохраняем обновленный список
     await DataStorage.savePlaces(places);
   }
 
@@ -229,12 +216,10 @@ class _HomePageState extends State<HomePage> {
     final originalIndex = places.indexOf(filteredPlaces[index]);
     final placeData = Map<String, dynamic>.from(filteredPlaces[index]);
 
-    // Получаем полный путь к изображению
     if (placeData['image'] != null) {
       placeData['image'] = await getFullPath(placeData['image']);
     }
 
-    // Переходим на экран редактирования
     final updatedPlace = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -245,21 +230,19 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    // Если данные изменены, обновляем список
     if (updatedPlace != null) {
       setState(() {
         places[originalIndex] = updatedPlace;
         filteredPlaces[index] = updatedPlace;
       });
 
-      // Сохраняем обновлённые данные
       await DataStorage.savePlaces(places);
     }
   }
 
   Future<String> getFullPath(String relativePath) async {
     if (relativePath.isEmpty) {
-      return ''; // Возвращаем пустую строку, если путь отсутствует
+      return '';
     }
     final directory = await getApplicationDocumentsDirectory();
     return '${directory.path}/$relativePath';
@@ -286,7 +269,7 @@ class _HomePageState extends State<HomePage> {
     final customTheme = Theme.of(context).extension<CustomTheme>();
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus(); // Снимает фокус с любого TextField
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         body: body(theme: theme, customTheme: customTheme),
@@ -475,10 +458,8 @@ class _HomePageState extends State<HomePage> {
                 }),
               ).then((updatedFavorite) async {
                 if (updatedFavorite != null && randomQuote != null) {
-                  // Обновляем только статус избранного для цитаты дня
                   randomQuote!['favorite'] = updatedFavorite;
 
-                  // Загружаем обновленные данные из SharedPreferences
                   final storedQuotes = await DataStorage.getQuotes();
                   if (storedQuotes.isNotEmpty) {
                     quotesList = storedQuotes;
@@ -520,7 +501,6 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: Text(
                   '“${randomQuote?['quote'] ?? ''}”',
-                  // maxLines: 3,
                   style: theme.titleMedium?.copyWith(
                     fontSize: 20,
                   ),
@@ -593,7 +573,6 @@ class _HomePageState extends State<HomePage> {
                         ).then((value) async {
                           places = await DataStorage.getPlaces();
                           filteredPlaces = List.from(places);
-                          print(places);
                           setState(() {});
                           FocusScope.of(context).unfocus();
                         });
@@ -638,33 +617,6 @@ class _HomePageState extends State<HomePage> {
                 );
               },
             ),
-            // ListView(
-            //   children: [
-            //     placeCard(
-            //       imagePath: AppImages
-            //           .onboarding1, // Замените на правильный путь к изображению
-            //       title: "The Lost Island",
-            //       type: "Forest",
-            //       hashtag: "#LostWorld",
-            //     ),
-            //     SizedBox(height: 15.w),
-            //     placeCard(
-            //       imagePath: AppImages
-            //           .onboarding2, // Замените на правильный путь к изображению
-            //       title: "Silent hill",
-            //       type: "City",
-            //       hashtag: "#MysteruWorld",
-            //     ),
-            //     SizedBox(height: 15.w),
-            //     placeCard(
-            //       imagePath: AppImages
-            //           .onboarding3, // Замените на правильный путь к изображению
-            //       title: "Salty lake",
-            //       type: "Lake",
-            //       hashtag: "#Dreamplace",
-            //     ),
-            //   ],
-            // ),
           ),
         ],
       ),
@@ -694,7 +646,7 @@ class _HomePageState extends State<HomePage> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: AppColors.darkGrey,
-                      suffixIcon: Icon(Icons.search, color: AppColors.white),
+                      suffixIcon: Image.asset(AppImages.search),
                       hintText: "Search",
                       hintStyle: theme.bodySmall?.copyWith(
                         color: AppColors.grey,
@@ -747,7 +699,6 @@ class _HomePageState extends State<HomePage> {
             ).then((value) async {
               places = await DataStorage.getPlaces();
               filteredPlaces = List.from(places);
-              print(places);
               setState(() {});
               FocusScope.of(context).unfocus();
             });
@@ -850,7 +801,6 @@ class _HomePageState extends State<HomePage> {
               );
             },
           ),
-          // SizedBox(width: 15.w),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(15),
@@ -889,28 +839,24 @@ class _HomePageState extends State<HomePage> {
               onTap: () {
                 showDialog(
                   context: context,
-                  barrierDismissible:
-                      true, // Позволяет закрывать диалог при нажатии вне него
+                  barrierDismissible: true,
                   builder: (context) {
                     final theme = Theme.of(context).textTheme;
 
                     return Dialog(
-                      backgroundColor: Colors.transparent, // Прозрачный фон
-                      insetPadding: EdgeInsets.zero, // Убираем отступы
+                      backgroundColor: Colors.transparent,
+                      insetPadding: EdgeInsets.zero,
                       child: GestureDetector(
                         onTap: () {
-                          Navigator.pop(
-                              context); // Закрывает диалог при нажатии за пределами
+                          Navigator.pop(context);
                         },
                         child: Container(
-                          color:
-                              Colors.transparent, // Прозрачный фон для области
+                          color: Colors.transparent,
                           child: Center(
                             child: GestureDetector(
-                              onTap:
-                                  () {}, // Блокирует закрытие при нажатии внутри
+                              onTap: () {},
                               child: Container(
-                                width: 105.w, // Фиксированная ширина окна
+                                width: 105.w,
                                 decoration: BoxDecoration(
                                   color: AppColors.darkGrey,
                                   borderRadius: BorderRadius.circular(20),
@@ -987,7 +933,7 @@ class _HomePageState extends State<HomePage> {
                                                                 GestureDetector(
                                                               onTap: () {
                                                                 Navigator.pop(
-                                                                    context); // Закрыть диалог
+                                                                    context);
                                                                 FocusScope.of(
                                                                         context)
                                                                     .unfocus();
@@ -1053,7 +999,7 @@ class _HomePageState extends State<HomePage> {
                                                                 deletePlace(
                                                                     index);
                                                                 Navigator.pop(
-                                                                    context); // Закрыть диалог
+                                                                    context);
                                                                 FocusScope.of(
                                                                         context)
                                                                     .unfocus();

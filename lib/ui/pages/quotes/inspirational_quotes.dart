@@ -39,11 +39,10 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
   @override
   void initState() {
     super.initState();
-    // Инициализация поиска и загрузка данных
+
     filteredQuotesList = quotesList;
     _searchController.addListener(_onSearchChanged);
 
-    // Проверяем статус `favorite` для цитаты дня
     _loadFavoriteStatus();
   }
 
@@ -92,10 +91,8 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
 
     quotesList = List<Map<String, dynamic>>.from(updatedQuotes);
 
-    // Сохраняем изменения
     await DataStorage.saveQuotes(quotesList);
 
-    // Обновляем локальный статус
     if (widget.quoteOfTheDay == quoteText) {
       setState(() {
         isFavorite = !isFavorite;
@@ -123,7 +120,7 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
     final customTheme = Theme.of(context).extension<CustomTheme>();
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus(); // Снимает фокус с любого TextField
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         body: body(theme: theme, customTheme: customTheme),
@@ -340,12 +337,11 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
             style: theme.bodySmall?.copyWith(
               color: AppColors.white,
             ),
-            // onChanged: updateSearch,
             cursorColor: AppColors.white,
             decoration: InputDecoration(
               filled: true,
               fillColor: AppColors.darkGrey,
-              suffixIcon: Icon(Icons.search, color: AppColors.white),
+              suffixIcon: Image.asset(AppImages.search),
               hintText: "Search",
               hintStyle: theme.bodySmall?.copyWith(
                 color: AppColors.grey,

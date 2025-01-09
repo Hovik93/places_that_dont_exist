@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:places_that_dont_exist/base/images.dart';
-import 'package:places_that_dont_exist/data/quotes_data.dart';
 import 'package:places_that_dont_exist/theme/theme.dart';
 import 'package:places_that_dont_exist/ui/data_storage.dart';
 import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
@@ -75,7 +74,6 @@ class _FavoriteQuotesScreenState extends State<FavoriteQuotesScreen> {
       filteredQuotesList = List.from(updatedQuotes);
     });
 
-    // Обновляем в общем списке quotesList в SharedPreferences
     final storedQuotes = await DataStorage.getQuotes();
     final updatedStoredQuotes = storedQuotes.map((category) {
       final updatedContent =
@@ -97,7 +95,7 @@ class _FavoriteQuotesScreenState extends State<FavoriteQuotesScreen> {
 
     await DataStorage.saveQuotes(
         List<Map<String, dynamic>>.from(updatedStoredQuotes));
-    _loadFavoriteQuotes(); // Перезагружаем список избранного
+    _loadFavoriteQuotes();
   }
 
   void _onSearchChanged() {
@@ -120,7 +118,7 @@ class _FavoriteQuotesScreenState extends State<FavoriteQuotesScreen> {
     final customTheme = Theme.of(context).extension<CustomTheme>();
     return GestureDetector(
       onTap: () {
-        FocusScope.of(context).unfocus(); // Снимает фокус с любого TextField
+        FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         body: body(theme: theme, customTheme: customTheme),
@@ -234,7 +232,6 @@ class _FavoriteQuotesScreenState extends State<FavoriteQuotesScreen> {
                             Expanded(
                               child: Text(
                                 '“${filteredQuotesList[index]['quote'] ?? ''}”',
-                                // maxLines: 3,
                                 style: theme.titleMedium?.copyWith(
                                   fontSize: 20,
                                 ),
@@ -272,12 +269,11 @@ class _FavoriteQuotesScreenState extends State<FavoriteQuotesScreen> {
         style: theme.bodySmall?.copyWith(
           color: AppColors.white,
         ),
-        // onChanged: updateSearch,
         cursorColor: AppColors.white,
         decoration: InputDecoration(
           filled: true,
           fillColor: AppColors.darkGrey,
-          suffixIcon: Icon(Icons.search, color: AppColors.white),
+          suffixIcon: Image.asset(AppImages.search),
           hintText: "Search",
           hintStyle: theme.bodySmall?.copyWith(
             color: AppColors.grey,
