@@ -12,6 +12,7 @@ import 'package:places_that_dont_exist/ui/pages/quotes/quotes.dart';
 import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
 
 import 'package:places_that_dont_exist/base/colors.dart';
+import 'package:share_plus/share_plus.dart';
 
 // ignore: must_be_immutable
 class InspirationalQuotesScreen extends StatefulWidget {
@@ -304,7 +305,13 @@ class _InspirationalQuotesScreenState extends State<InspirationalQuotesScreen> {
                   ),
                 ),
               ),
-              Image.asset(AppImages.forward)
+              GestureDetector(
+                onTap: () async {
+                  await Share.share(
+                      "“${widget.quoteOfTheDay ?? ''}”\n${author ?? ''}");
+                },
+                child: Image.asset(AppImages.forward),
+              )
             ],
           ),
           Row(

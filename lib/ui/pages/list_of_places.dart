@@ -8,6 +8,8 @@ import 'package:places_that_dont_exist/base/images.dart';
 import 'package:places_that_dont_exist/theme/theme.dart';
 import 'package:places_that_dont_exist/ui/data_storage.dart';
 import 'package:places_that_dont_exist/ui/pages/adding_place.dart';
+import 'package:places_that_dont_exist/ui/pages/map.dart';
+import 'package:places_that_dont_exist/ui/pages/tips/tips_list.dart';
 import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
 
 import 'package:places_that_dont_exist/base/colors.dart';
@@ -249,31 +251,44 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
             ),
             Row(
               children: [
-                ShaderMask(
-                  shaderCallback: (bounds) {
-                    return customTheme?.textRedGradient.createShader(
-                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
-                        ) ??
-                        const LinearGradient(
-                            colors: [Colors.white, Colors.white]).createShader(
-                          Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) {
+                        return TipsListScreen(
+                          title: "Tips for creating places",
                         );
+                      }),
+                    );
                   },
-                  child: Container(
-                    width: 24.w,
-                    height: 24.w,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.white,
-                        width: 1.5,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        "?",
-                        style: TextStyle(
+                  child: ShaderMask(
+                    shaderCallback: (bounds) {
+                      return customTheme?.textRedGradient.createShader(
+                            Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                          ) ??
+                          const LinearGradient(
+                                  colors: [Colors.white, Colors.white])
+                              .createShader(
+                            Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+                          );
+                    },
+                    child: Container(
+                      width: 24.w,
+                      height: 24.w,
+                      decoration: BoxDecoration(
+                        border: Border.all(
                           color: AppColors.white,
+                          width: 1.5,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          "?",
+                          style: TextStyle(
+                            color: AppColors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -282,7 +297,19 @@ class _ListOfPlaceScreenState extends State<ListOfPlaceScreen> {
                 SizedBox(
                   width: 10.w,
                 ),
-                Image.asset(AppImages.pointOnMap)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) {
+                        return MapPage(
+                          title: "Map",
+                        );
+                      }),
+                    );
+                  },
+                  child: Image.asset(AppImages.pointOnMap),
+                )
               ],
             ),
           ],

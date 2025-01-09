@@ -10,6 +10,7 @@ import 'package:places_that_dont_exist/ui/data_storage.dart';
 import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
 
 import 'package:places_that_dont_exist/base/colors.dart';
+import 'package:share_plus/share_plus.dart';
 
 // ignore: must_be_immutable
 class QuotesScreen extends StatefulWidget {
@@ -239,7 +240,13 @@ class _QuotesScreenState extends State<QuotesScreen> {
                                 ),
                               ),
                             ),
-                            Image.asset(AppImages.forward)
+                            GestureDetector(
+                              onTap: () async {
+                                await Share.share(
+                                    "“${filteredQuotesList[index]['quote'] ?? ''}”\n${filteredQuotesList[index]["author"] ?? ''}");
+                              },
+                              child: Image.asset(AppImages.forward),
+                            )
                           ],
                         ),
                         Row(

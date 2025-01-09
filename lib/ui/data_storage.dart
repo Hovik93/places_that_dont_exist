@@ -5,6 +5,7 @@ class DataStorage {
   static const String _onboardingKey = 'onboarding_seen';
   static const String _placesKey = 'saved_places';
   static const String _quotesKey = 'saved_quotes';
+  static const String _tipsKey = 'saved_tips';
 
   static Future<bool> isOnboardingSeen() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -48,6 +49,23 @@ class DataStorage {
     final storedQuotes = prefs.getString('quotesList');
     if (storedQuotes != null) {
       return List<Map<String, dynamic>>.from(jsonDecode(storedQuotes));
+    }
+    return [];
+  }
+
+  // Сохранение tipsData
+  static Future<void> saveTips(List<Map<String, dynamic>> tips) async {
+    final prefs = await SharedPreferences.getInstance();
+    final encodedTips = jsonEncode(tips);
+    await prefs.setString(_tipsKey, encodedTips);
+  }
+
+  // Загрузка tipsData
+  static Future<List<Map<String, dynamic>>> getTips() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedTips = prefs.getString(_tipsKey);
+    if (savedTips != null) {
+      return List<Map<String, dynamic>>.from(jsonDecode(savedTips));
     }
     return [];
   }

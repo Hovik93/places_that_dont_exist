@@ -15,6 +15,9 @@ import 'package:places_that_dont_exist/ui/pages/map.dart';
 import 'package:places_that_dont_exist/ui/pages/place_details.dart';
 import 'package:places_that_dont_exist/ui/pages/quotes/inspirational_quotes.dart';
 import 'package:places_that_dont_exist/ui/pages/settings.dart';
+import 'package:places_that_dont_exist/ui/pages/tips/tips_list.dart';
+import 'package:share_plus/share_plus.dart';
+// import 'package:share_plus/share_plus.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -32,6 +35,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
+    super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       places = await DataStorage.getPlaces();
       filteredPlaces = List.from(places);
@@ -98,7 +102,6 @@ class _HomePageState extends State<HomePage> {
       };
     }
 
-    // Обновляем UI
     setState(() {});
   }
 
@@ -355,25 +358,11 @@ class _HomePageState extends State<HomePage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) {
-                            return InspirationalQuotesScreen(
-                              title: "Inspirational quotes",
-                              quoteOfTheDay: '${randomQuote?['quote'] ?? ''}',
+                            return TipsListScreen(
+                              title: "Tips for creating places",
                             );
                           }),
-                        ).then((updatedFavorite) async {
-                          if (updatedFavorite != null && randomQuote != null) {
-                            // Обновляем только статус избранного для цитаты дня
-                            randomQuote!['favorite'] = updatedFavorite;
-
-                            // Загружаем обновленные данные из SharedPreferences
-                            final storedQuotes = await DataStorage.getQuotes();
-                            if (storedQuotes.isNotEmpty) {
-                              quotesList = storedQuotes;
-                            }
-
-                            setState(() {});
-                          }
-                        });
+                        );
                       },
                       child: ShaderMask(
                         shaderCallback: (bounds) {
@@ -474,12 +463,38 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            "Quote of the day",
-            style: theme.bodySmall?.copyWith(
-              color: AppColors.grey,
-              decoration: TextDecoration.underline,
-              decorationColor: AppColors.grey,
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) {
+                  return InspirationalQuotesScreen(
+                    title: "Inspirational quotes",
+                    quoteOfTheDay: '${randomQuote?['quote'] ?? ''}',
+                  );
+                }),
+              ).then((updatedFavorite) async {
+                if (updatedFavorite != null && randomQuote != null) {
+                  // Обновляем только статус избранного для цитаты дня
+                  randomQuote!['favorite'] = updatedFavorite;
+
+                  // Загружаем обновленные данные из SharedPreferences
+                  final storedQuotes = await DataStorage.getQuotes();
+                  if (storedQuotes.isNotEmpty) {
+                    quotesList = storedQuotes;
+                  }
+
+                  setState(() {});
+                }
+              });
+            },
+            child: Text(
+              "Quote of the day",
+              style: theme.bodySmall?.copyWith(
+                color: AppColors.grey,
+                decoration: TextDecoration.underline,
+                decorationColor: AppColors.grey,
+              ),
             ),
           ),
           SizedBox(
@@ -511,7 +526,13 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              Image.asset(AppImages.forward)
+              GestureDetector(
+                onTap: () async {
+                  await Share.share(
+                      "“${randomQuote?['quote'] ?? ''}”\n${randomQuote?['author'] ?? ''}");
+                },
+                child: Image.asset(AppImages.forward),
+              )
             ],
           ),
           SizedBox(
@@ -1092,102 +1113,6 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                 );
-                // showDialog(
-                //   context: context,
-                //   builder: (context) {
-                //     return AlertDialog(
-                //       shape: RoundedRectangleBorder(
-                //         borderRadius: BorderRadius.circular(20),
-                //       ),
-                //       backgroundColor: AppColors.darkGrey,
-                //       content: Column(
-                //         mainAxisSize: MainAxisSize.min,
-                //         children: [
-                //           Text(
-                //             'Delete',
-                //             style: theme.titleMedium?.copyWith(
-                //               color: AppColors.gradientTextRed1,
-                //               fontSize: 22.w,
-                //             ),
-                //           ),
-                //           SizedBox(height: 10),
-                //           Text(
-                //             'Do you really want to delete the data?',
-                //             style: theme.bodySmall,
-                //           ),
-                //           SizedBox(height: 20),
-                //           Row(
-                //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //             children: [
-                //               Expanded(
-                //                 child: GestureDetector(
-                //                   onTap: () {
-                //                     Navigator.pop(context); // Закрыть диалог
-                //                   },
-                //                   child: ShaderMask(
-                //                     shaderCallback: (bounds) {
-                //                       return customTheme?.secondaryGradient
-                //                               .createShader(
-                //                             Rect.fromLTWH(0, 0, bounds.width,
-                //                                 bounds.height),
-                //                           ) ??
-                //                           LinearGradient(colors: [
-                //                             AppColors.white,
-                //                             AppColors.white
-                //                           ]).createShader(
-                //                             Rect.fromLTWH(0, 0, bounds.width,
-                //                                 bounds.height),
-                //                           );
-                //                     },
-                //                     child: Container(
-                //                       padding:
-                //                           EdgeInsets.symmetric(vertical: 10),
-                //                       decoration: BoxDecoration(
-                //                         border: Border.all(
-                //                           width: 1,
-                //                           color: AppColors.white,
-                //                         ),
-                //                         borderRadius: BorderRadius.circular(20),
-                //                       ),
-                //                       child: Center(
-                //                         child: Text('Cancel',
-                //                             style: theme.bodySmall),
-                //                       ),
-                //                     ),
-                //                   ),
-                //                 ),
-                //               ),
-                //               SizedBox(width: 10),
-                //               Expanded(
-                //                 child: GestureDetector(
-                //                   onTap: () {
-                //                     // Логика удаления данных
-                //                     Navigator.pop(context); // Закрыть диалог
-                //                   },
-                //                   child: Container(
-                //                     padding: EdgeInsets.symmetric(vertical: 10),
-                //                     decoration: BoxDecoration(
-                //                       color: AppColors.gradientTextRed1,
-                //                       borderRadius: BorderRadius.circular(20),
-                //                     ),
-                //                     child: Center(
-                //                       child: Text(
-                //                         'Delete',
-                //                         style: theme.bodySmall?.copyWith(
-                //                           color: AppColors.white,
-                //                         ),
-                //                       ),
-                //                     ),
-                //                   ),
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //         ],
-                //       ),
-                //     );
-                //   },
-                // );
               },
               child: Image.asset(AppImages.dotHoriz),
             ),

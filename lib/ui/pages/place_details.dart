@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:places_that_dont_exist/base/images.dart';
 import 'package:places_that_dont_exist/theme/theme.dart';
 import 'package:places_that_dont_exist/ui/data_storage.dart';
+import 'package:places_that_dont_exist/ui/pages/map.dart';
 import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
 
 import 'package:places_that_dont_exist/base/colors.dart';
@@ -127,7 +128,19 @@ class _PlaceDetailsScreenState extends State<PlaceDetailsScreen> {
                 ),
               ],
             ),
-            Image.asset(AppImages.pointOnMap),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) {
+                    return MapPage(
+                      title: "Map",
+                    );
+                  }),
+                );
+              },
+              child: Image.asset(AppImages.pointOnMap),
+            ),
           ],
         ),
       ),
