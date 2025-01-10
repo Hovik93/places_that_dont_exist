@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:places_that_dont_exist/theme/theme.dart';
+import 'package:places_that_dont_exist/ui/data_storage.dart';
+import 'package:places_that_dont_exist/ui/home.dart';
 import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -217,8 +219,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     SizedBox(width: 10.w),
                                     Expanded(
                                       child: GestureDetector(
-                                        onTap: () {
-                                          Navigator.pop(context);
+                                        onTap: () async {
+                                          await DataStorage
+                                              .clearAllData(); // Удаляем все данные
+                                          Navigator.pop(
+                                              context); // Закрываем диалог
+                                          Navigator.pushAndRemoveUntil(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    HomePage()), // Переход на HomePage
+                                            (route) =>
+                                                false, // Удаляем все предыдущие маршруты из стека
+                                          );
                                         },
                                         child: Container(
                                           padding: EdgeInsets.symmetric(

@@ -63,4 +63,9 @@ class DataStorage {
     }
     return [];
   }
+
+  static Future<void> clearAllData() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
 }

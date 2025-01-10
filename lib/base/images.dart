@@ -19,4 +19,5 @@ class AppImages {
   static const String camera = 'assets/icons/camera.png';
   static const String dotHoriz = 'assets/icons/dotHoriz.png';
   static const String search = 'assets/icons/search.png';
+  static const String marker = 'assets/icons/marker.png';
 }

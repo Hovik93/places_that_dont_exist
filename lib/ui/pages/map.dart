@@ -1,9 +1,14 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui';
+// import 'dart:ui';
 
 import 'package:countries_world_map/countries_world_map.dart';
 import 'package:countries_world_map/data/maps/world_map.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:places_that_dont_exist/base/colors.dart';
@@ -15,6 +20,7 @@ import 'package:places_that_dont_exist/ui/pages/place_details.dart';
 import 'package:places_that_dont_exist/ui/pages/tips/tips_list.dart';
 import 'package:places_that_dont_exist/ui/widgets/buttom_border.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
 
 // ignore: must_be_immutable
 class MapPage extends StatefulWidget {
@@ -29,18 +35,46 @@ class MapPage extends StatefulWidget {
 }
 
 class _MapPageState extends State<MapPage> {
+  final GlobalKey _repaintBoundaryKey = GlobalKey();
   List<Map<String, dynamic>> places = [];
   List<Map<String, dynamic>> filteredPlaces = [];
+  double _currentScale = 1.0;
+  final Random _random = Random();
+
+  final Map<String, String> _imageCache = {};
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      places = await DataStorage.getPlaces();
-      filteredPlaces = List.from(places);
+    _loadData();
+  }
 
-      setState(() {});
-    });
+  Future<String> _getOrCacheImagePath(String imagePath) async {
+    if (_imageCache.containsKey(imagePath)) {
+      return _imageCache[imagePath]!;
+    }
+    final path = await getFullPath(imagePath);
+    _imageCache[imagePath] = path;
+    return path;
+  }
+
+  Future<void> _loadData() async {
+    places = await DataStorage.getPlaces();
+
+    bool isWithinMapBounds(double lat, double lon) {
+      return lat >= -60 && lat <= 0 && lon >= -170 && lon <= 170;
+    }
+
+    for (var place in places) {
+      do {
+        place['latitude'] = _random.nextDouble() * 60 - 60;
+        place['longitude'] = _random.nextDouble() * 340 - 170;
+      } while (!isWithinMapBounds(place['latitude'], place['longitude']));
+    }
+
+    filteredPlaces = List.from(places);
+
+    setState(() {});
   }
 
   Future<String> getFullPath(String relativePath) async {
@@ -60,6 +94,42 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
+  Future<void> _captureAndShareScreenshot() async {
+    try {
+      // Получаем RenderRepaintBoundary
+      RenderRepaintBoundary boundary = _repaintBoundaryKey.currentContext!
+          .findRenderObject() as RenderRepaintBoundary;
+
+      // Захватываем изображение
+      var image = await boundary.toImage(pixelRatio: 3.0);
+
+      // Преобразуем в ByteData
+      ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
+
+      if (byteData != null) {
+        // Конвертируем в Uint8List
+        Uint8List pngBytes = byteData.buffer.asUint8List();
+
+        // Сохраняем изображение во временную директорию
+        final directory = await getTemporaryDirectory();
+        final filePath = '${directory.path}/screenshot.png';
+        final file = File(filePath);
+        await file.writeAsBytes(pngBytes);
+
+        // Конвертируем в XFile для `shareXFiles`
+        final xFile = XFile(filePath);
+
+        // Шарим изображение
+        await Share.shareXFiles(
+          [xFile],
+          text: 'Check out this map!',
+        );
+      }
+    } catch (e) {
+      debugPrint('Error capturing screenshot: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final TextTheme theme = Theme.of(context).textTheme;
@@ -68,8 +138,11 @@ class _MapPageState extends State<MapPage> {
       onTap: () {
         FocusScope.of(context).unfocus();
       },
-      child: Scaffold(
-        body: body(theme: theme, customTheme: customTheme),
+      child: RepaintBoundary(
+        key: _repaintBoundaryKey,
+        child: Scaffold(
+          body: body(theme: theme, customTheme: customTheme),
+        ),
       ),
     );
   }
@@ -173,9 +246,7 @@ class _MapPageState extends State<MapPage> {
                   width: 10.w,
                 ),
                 GestureDetector(
-                  onTap: () async {
-                    await Share.share("map");
-                  },
+                  onTap: _captureAndShareScreenshot,
                   child: Image.asset(AppImages.forward),
                 )
               ],
@@ -193,7 +264,17 @@ class _MapPageState extends State<MapPage> {
           width: double.infinity,
           height: double.infinity,
           child: InteractiveViewer(
-            maxScale: 20.0,
+            constrained: true,
+            boundaryMargin: EdgeInsets.all(0),
+            maxScale: 7.0,
+            minScale: 1.0,
+            onInteractionUpdate: (ScaleUpdateDetails details) {
+              if (details.scale != 1.0) {
+                setState(() {
+                  _currentScale = details.scale;
+                });
+              }
+            },
             child: SimpleMap(
               instructions: SMapWorld.instructionsMercator,
               defaultColor: Colors.grey,
@@ -203,99 +284,21 @@ class _MapPageState extends State<MapPage> {
                 debugPrint('Tapped on country: $name ($id)');
               },
               markers: [
-                SimpleMapMarker(
-                    markerSize: Size(16, 16),
-                    latLong: LatLong(latitude: 48.864716, longitude: 2.349014),
-                    marker: Icon(
-                      Icons.circle_outlined,
-                      color: Colors.green,
-                      size: 40,
-                    )),
-                SimpleMapMarker(
-                    markerSize: Size(16, 16),
-                    latLong: LatLong(latitude: 52.520008, longitude: 13.404954),
-                    marker: Icon(
-                      Icons.circle_outlined,
-                      color: Colors.green,
-                      size: 16,
-                    )),
-
-                SimpleMapMarker(
-                    markerSize: Size(16, 16),
-                    latLong: LatLong(latitude: 51.507351, longitude: -0.127758),
-                    marker: Icon(
-                      Icons.circle_outlined,
-                      color: Colors.green,
-                      size: 16,
-                    )),
-
-                // BOGOTA
-                SimpleMapMarker(
-                    markerSize: Size(16, 16),
-                    latLong: LatLong(latitude: 4.710989, longitude: -74.072092),
-                    marker: Icon(
-                      Icons.circle_outlined,
-                      color: Colors.green,
-                      size: 16,
-                    )),
-
-                // NEW YORK
-
-                SimpleMapMarker(
-                    markerSize: Size(16, 16),
-                    latLong:
-                        LatLong(latitude: 40.730610, longitude: -73.935242),
-                    marker: Icon(
-                      Icons.circle_outlined,
-                      color: Colors.green,
-                      size: 16,
-                    )),
-
-                // TOKYO
-                SimpleMapMarker(
-                    markerSize: Size(16, 16),
-                    latLong:
-                        LatLong(latitude: 35.652832, longitude: 139.839478),
-                    marker: Icon(
-                      Icons.circle_outlined,
-                      color: Colors.green,
-                      size: 16,
-                    )),
-
-                // // TORONTO
-                SimpleMapMarker(
-                    markerSize: Size(16, 16),
-                    latLong:
-                        LatLong(latitude: 43.651070, longitude: -79.347015),
-                    marker: Icon(
-                      Icons.circle_outlined,
-                      color: Colors.green,
-                      size: 16,
-                    )),
+                ...filteredPlaces.map((place) {
+                  if (!_isValidCoordinates(
+                      place['latitude'], place['longitude'])) {
+                    return null;
+                  }
+                  return SimpleMapMarker(
+                    markerSize: Size(30, 30),
+                    latLong: LatLong(
+                      latitude: place['latitude'],
+                      longitude: place['longitude'],
+                    ),
+                    marker: _buildMarker(place, _currentScale),
+                  );
+                }).whereType<SimpleMapMarker>(),
               ],
-              // key: Key(properties.toString()),
-              // colors: keyValuesPaires,
-              // instructions: SMapCanada.instructions,
-              // callback: (id, name, tapDetails) {
-              //   print('id: $id, name: $name');
-              // },
-              // callback: (id, name, tapDetails) {
-              //   setState(() {
-              //     state = name;
-
-              //     int i = properties
-              //         .indexWhere((element) => element['id'] == id);
-
-              //     properties[i]['color'] =
-              //         properties[i]['color'] == Colors.green
-              //             ? null
-              //             : Colors.green;
-              //     keyValuesPaires[properties[i]['id']] =
-              //         properties[i]['color'];
-              //   });
-              // },
-              // ))));
-              // ],
             ),
           ),
         ),
@@ -348,6 +351,7 @@ class _MapPageState extends State<MapPage> {
                           );
                         }),
                       ).then((value) async {
+                        _loadData();
                         setState(() {});
                         FocusScope.of(context).unfocus();
                       });
@@ -367,6 +371,7 @@ class _MapPageState extends State<MapPage> {
                         width: 52.w,
                         height: 52.w,
                         decoration: BoxDecoration(
+                          color: AppColors.darkBlack,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(width: 1, color: AppColors.white),
                         ),
@@ -455,58 +460,70 @@ class _MapPageState extends State<MapPage> {
       margin: EdgeInsets.only(right: 15.w),
       child: Column(
         children: [
-          FutureBuilder<String>(
-            future: getFullPath(imagePath),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Container(
-                  width: 80.w,
-                  height: 80.w,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.white,
-                    ),
-                  ),
-                );
-              }
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return Container(
-                  width: 80.w,
-                  height: 80.w,
-                  color: AppColors.grey,
-                  child: Icon(Icons.image, color: AppColors.white),
-                );
-              }
-              return Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Color(int.parse(colorType)),
-                    width: 2.w,
-                  ),
-                  borderRadius: BorderRadius.circular(40.w),
+          _imageCache.containsKey(imagePath)
+              ? _buildCachedImage(_imageCache[imagePath]!, colorType)
+              : FutureBuilder<String>(
+                  future: _getOrCacheImagePath(imagePath),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return _buildPlaceholder();
+                    }
+                    if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                      return _buildCachedImage(snapshot.data!, colorType);
+                    }
+                    return _buildErrorPlaceholder();
+                  },
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(40.w),
-                  child: Image.file(
-                    File(snapshot.data!),
-                    width: 80.w,
-                    height: 80.w,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              );
-            },
-          ),
-          SizedBox(
-            height: 5.w,
-          ),
+          SizedBox(height: 5.w),
           Text(
             title,
             overflow: TextOverflow.ellipsis,
             style: theme.bodySmall?.copyWith(fontSize: 12),
-          )
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCachedImage(String path, String colorType) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Color(int.parse(colorType)),
+          width: 2.w,
+        ),
+        borderRadius: BorderRadius.circular(40.w),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(40.w),
+        child: Image.file(
+          File(path),
+          width: 80.w,
+          height: 80.w,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 80.w,
+      height: 80.w,
+      child: Center(
+        child: CircularProgressIndicator(
+          color: AppColors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorPlaceholder() {
+    return Container(
+      width: 80.w,
+      height: 80.w,
+      color: AppColors.grey,
+      child: Icon(Icons.image, color: AppColors.white),
     );
   }
 
@@ -526,6 +543,43 @@ class _MapPageState extends State<MapPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildMarker(Map<String, dynamic> place, double scale) {
+    if (scale < 1.7) {
+      return Image.asset(AppImages.marker);
+    } else {
+      return FutureBuilder<String>(
+        future: getFullPath(place['image']),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey,
+              ),
+            );
+          }
+          return Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Color(int.parse(place['typeColor'])),
+                width: 2,
+              ),
+              image: DecorationImage(
+                image: FileImage(File(snapshot.data!)),
+                fit: BoxFit.cover,
+              ),
+            ),
+          );
+        },
+      );
+    }
   }
 
   bool _isValidCoordinates(double? latitude, double? longitude) {
